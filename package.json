@@ -1,5 +1,5 @@
 {
-  "name": "cloudonix-voiceai-connector",
+  "name": "cx-vcc",
   "version": "0.1.0",
   "description": "Cloudonix Agentic Voice Connector Tool",
   "main": "index.js",
