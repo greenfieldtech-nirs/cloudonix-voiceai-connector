@@ -1,13 +1,21 @@
 {
-  "name": "cloudonix-voiceai-connector",
+  "name": "cx-vcc",
   "version": "0.1.0",
   "description": "Cloudonix Agentic Voice Connector Tool",
   "main": "index.js",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/greenfieldtech-nirs/cloudonix-voiceai-connector.git"
+  },
+  "bugs": {
+    "url": "https://github.com/greenfieldtech-nirs/cloudonix-voiceai-connector/issues"
+  },
+
   "author": {
     "name": "Nir Simionovich",
     "email": "nirs@cloudonix.io",
-    "url": "https://github.com/cloudonix/cloudonix-voiceai-connector",
+    "url": "https://github.com/greenfieldtech-nirs/cloudonix-voiceai-connector",
     "role": "Developer"
   },
   "license": "MIT",
