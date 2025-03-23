@@ -1,8 +1,9 @@
 const axios = require('axios');
 const { logApiRequest, logApiResponse, logApiError, debugLog } = require('../utils/debug');
+const { getConfig, saveConfig } = require('../utils/config');
 
-class VapiApiService {
-  constructor(apiKey, baseUrl = 'https://api.vapi.ai') {
+class RetellApiService {
+  constructor(apiKey, baseUrl = 'https://api.retellai.com') {
     this.apiKey = apiKey;
     this.baseUrl = baseUrl;
 
@@ -15,14 +16,14 @@ class VapiApiService {
     });
 
     this._setupInterceptors();
+    this._updateConfig();
   }
 
   _setupInterceptors() {
     this.client.interceptors.request.use(
       (config) => {
-        logApiRequest(config.method.toUpperCase(), `${config.baseURL}${config.url}`, config.data);
         if (process.argv.includes('--debug')) {
-          console.log('\n=== VAPI API Request ===');
+          console.log('\n=== Retell API Request ===');
           console.log(`${config.method.toUpperCase()} ${config.url}`);
           console.log('Headers:', JSON.stringify(config.headers, null, 2));
           console.log('Request Data:', JSON.stringify(config.data, null, 2));
@@ -31,9 +32,8 @@ class VapiApiService {
         return config;
       },
       (error) => {
-        logApiError(error, 'vapiApi.js', this._getLineNumber());
         if (process.argv.includes('--debug')) {
-          console.error('\n=== VAPI API Request Error ===');
+          console.error('\n=== Retell API Request Error ===');
           console.error(error);
           console.error('================================\n');
         }
@@ -43,9 +43,8 @@ class VapiApiService {
 
     this.client.interceptors.response.use(
       (response) => {
-        logApiResponse(response);
         if (process.argv.includes('--debug')) {
-          console.log('\n=== VAPI API Response ===');
+          console.log('\n=== Retell API Response ===');
           console.log(`Status: ${response.status} ${response.statusText}`);
           console.log('Headers:', JSON.stringify(response.headers, null, 2));
           console.log('Response Data:', JSON.stringify(response.data, null, 2));
@@ -54,9 +53,8 @@ class VapiApiService {
         return response;
       },
       (error) => {
-        logApiError(error, 'vapiApi.js', this._getLineNumber());
         if (process.argv.includes('--debug')) {
-          console.error('\n=== VAPI API Error Response ===');
+          console.error('\n=== Retell API Error Response ===');
           if (error.response) {
             console.error(`Status: ${error.response.status} ${error.response.statusText}`);
             console.error('Headers:', JSON.stringify(error.response.headers, null, 2));
@@ -74,52 +72,70 @@ class VapiApiService {
     );
   }
 
+  _updateConfig() {
+    const config = getConfig();
+    config.retell = {
+      ...config.retell,
+      apiKey: this.apiKey,
+      apiUrl: this.baseUrl
+    };
+    saveConfig(config);
+  }
+
   _getLineNumber() {
     return new Error().stack.split('\n')[2].match(/:(\d+):/)[1];
   }
 
   async verifyApiKey() {
     try {
-      await this.client.get('/assistant');
+      await this.client.get('/list-agents');
       return true;
     } catch (error) {
-      if (error.response?.status === 403) {
-        throw new Error('Invalid VAPI API key: Authentication failed');
+      if (error.response && error.response.status === 403) {
+        throw new Error('Invalid Retell API key: Authentication failed');
       }
-      if (error.response?.status !== 403) {
-        debugLog('Warning: VAPI API returned a non-403 error, assuming API key is valid');
+      if (error.response && error.response.status !== 403) {
+        debugLog('Warning: Retell API returned a non-403 error, assuming API key is valid');
         return true;
       }
-      this._handleError(error, 'Failed to verify VAPI API key');
+      this._handleError(error, 'Failed to verify Retell API key');
     }
   }
 
-  async createSipTrunkConnection(name, inboundSipUri) {
+  async importPhoneNumber(phoneNumber, domainName) {
     try {
-      const response = await this.client.post('/credential', {
-        provider: 'byo-sip-trunk',
-        name,
-        gateways: [{ ip: inboundSipUri }]
+      const config = getConfig();
+      const domainConfig = config.domains[domainName];
+
+      if (!domainConfig?.inboundSipUri) {
+        throw new Error(`Domain ${domainName} not found or missing inbound SIP URI`);
+      }
+
+      const response = await this.client.post('/import-phone-number', {
+        phone_number: phoneNumber,
+        termination_uri: domainConfig.inboundSipUri
       });
+
+      this._updatePhoneNumberConfig(config, phoneNumber, domainName, response.data.last_modification_timestamp);
+
       return response.data;
     } catch (error) {
-      this._handleError(error, 'Failed to create VAPI SIP trunk connection');
+      this._handleError(error, 'Failed to import phone number to ReTell');
     }
   }
 
-  async addByoPhoneNumber(name, phoneNumber, credentialId) {
-    try {
-      const response = await this.client.post('/phone-number', {
-        provider: 'byo-phone-number',
-        name: `Cloudonix ${phoneNumber}`,
-        number: phoneNumber,
-        numberE164CheckEnabled: false,
-        credentialId
-      });
-      return response.data;
-    } catch (error) {
-      this._handleError(error, 'Failed to add BYO phone number');
+  _updatePhoneNumberConfig(config, phoneNumber, domainName, id) {
+    if (!config.retell) {
+      config.retell = { phoneNumbers: {} };
+    } else if (!config.retell.phoneNumbers) {
+      config.retell.phoneNumbers = {};
     }
+
+    config.retell.phoneNumbers[phoneNumber] = { id, domainName };
+    config.retell.apiKey = this.apiKey;
+    config.retell.apiUrl = this.baseUrl;
+
+    saveConfig(config);
   }
 
   _handleError(error, message) {
@@ -127,7 +143,7 @@ class VapiApiService {
 
     if (error.response) {
       const { status, data } = error.response;
-      errorMessage += data?.error || data?.message
+      errorMessage += data?.error || data?.message 
         ? `: ${data.error || data.message}`
         : `: Status ${status}`;
     } else if (error.request) {
@@ -140,4 +156,4 @@ class VapiApiService {
   }
 }
 
-module.exports = VapiApiService;
+module.exports = RetellApiService;
