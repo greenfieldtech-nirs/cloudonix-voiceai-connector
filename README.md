@@ -81,15 +81,7 @@ This will:
 
 ### Configure a Voice AI Service Provider
 
-```bash
-cx-vcc service --provider vapi --apikey YOUR_VAPI_API_KEY
-```
-
-This will:
-1. Verify the API key with the provider by calling the `/assistant` endpoint
-2. Store the API key in the configuration file for later use
-
-To create a SIP trunk while configuring the service:
+To create a connection to your Voice Agent service provider, use the following example:
 
 ```bash
 cx-vcc service --provider vapi --apikey YOUR_VAPI_API_KEY --name "My SIP Trunk" --domain example.com
@@ -99,24 +91,19 @@ This will:
 1. Configure the VAPI API key
 2. Create a SIP trunk connection between VAPI and Cloudonix
 3. Use the inbound SIP URI from the specified domain
-4. Store the trunk credential ID in the domain configuration
+4. Store the trunk credential ID in the Cloudonix domain configuration
 5. Display the SIP trunk details
 
 ### Add a Phone Number to a VAPI Assistant
 
 ```bash
-cx-vcc addnumber --domain example.com --provider vapi --number +12025551234 --assistant YOUR_ASSISTANT_ID
+cx-vcc addnumber --domain example.com --provider vapi --number +12025551234
 ```
 
 This will:
 1. Add the phone number to the previously created SIP trunk
-2. Associate the phone number with the specified assistant
-3. Store the phone number details in the domain configuration
-4. Display the phone number details
-
-The command follows this process:
-1. First it adds the number as a "BYO phone number" to the SIP trunk
-2. Then it assigns the number to the specified VAPI assistant
+2. Store the phone number details in the domain configuration
+3. Display the phone number details
 
 The phone number must be in E.164 format (e.g., +12025551234).
 
@@ -130,32 +117,26 @@ cx-vcc display
 
 Display configuration for a specific domain:
 
+** Display all configured domains and their associated phone numbers**
+```
+cx-vcc display
+```
+
+or
+
+** Display configuration and associated phone numbers for the `example.com` Cloudonix domain. **
 ```
 cx-vcc display --domain example.com
 ```
-
-This command allows you to view the current configuration of the Cloudonix Voice AI Connector. It provides a human-readable output with color-coded formatting for easier reading.
-When run without any options, it will display:
-
-1. All configured Cloudonix domains and their details
-2. The global VAPI configuration
-
-When run with the --domain option, it will display:
-1. The specific domain's configuration
-2. VAPI-specific configurations for that domain (if any)
 
 The displayed information includes:
 - Domain name
 - API keys (masked for security)
 - Domain aliases
 - Inbound SIP URI
-- Tenant information
-- VAPI trunk credential ID (if configured)
 - Associated phone numbers (if any), including:
   - Phone number
-  - Number ID
-  - Credential ID
-  - Associated Assistant ID
+  - SIP URI
 
 This command is useful for verifying your current setup and troubleshooting configuration issues.
 
@@ -166,7 +147,7 @@ You can enable debug mode with any command by adding the `--debug` flag:
 ```bash
 cx-vcc --debug configure --domain example.com --apikey YOUR_API_KEY
 cx-vcc --debug service --provider vapi --apikey YOUR_API_KEY
-cx-vcc --debug addnumber --domain example.com --provider vapi --number +12025551234 --assistant YOUR_ASSISTANT_ID
+cx-vcc --debug addnumber --domain example.com --provider vapi --number +12025551234
 ```
 
 When debug mode is enabled:
@@ -183,33 +164,30 @@ The configuration is stored in YAML format at `~/.cx-vcc/config.yaml` with a str
 ```yaml
 domains:
   example.com:
-    apiKey: YOUR_CLOUDONIX_API_KEY
-    alias: domain-alias-from-api
-    autoAlias: auto-alias-value
-    inboundSipUri: auto-alias-value.sip.cloudonix.net
+    apiKey: XI6057D.............
+    alias: 488633................
+    autoAlias: 488633b..................
+    inboundSipUri: 48863.................
     tenant: self
     vapi:
-      trunkCredentialId: credential-id-from-vapi
+      trunkCredentialId: 32b330f7...............
       phoneNumbers:
-        - id: phone-number-id
-          number: "+12025551234"
-          credentialId: credential-id-from-vapi
-          assistantId: assistant-id
+        '+12127773456':
+          id: 682ce050-................
+          sipUri: sip:+12127773456@api.vapi.ai
+    retell:
+      trunkCredentialId: Not required
+      phoneNumbers:
+        '+12127773456':
+          sipUri: sip:+12127773456@api.retellai.com
 vapi:
-  apiKey: YOUR_VAPI_API_KEY
+  apiKey: aeacb..................
   apiUrl: https://api.vapi.ai
+retell:
+  apiKey: key_0..................
+  apiUrl: https://api.retellai.com
+
 ```
-
-### API Details
-
-- **Cloudonix API**: 
-  - Uses the `/customers/self/domains/{domain}` endpoint to get domain details
-
-
-- **VAPI API**:
-  - Uses the `/assistant` endpoint to verify API keys
-  - Uses the `/credential` endpoint to create SIP trunk connections
-  - Uses the `/phone-number` endpoint to add phone numbers to SIP trunks and assistants
 
 ## Contributing
 
