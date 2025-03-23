@@ -59,7 +59,6 @@ program
     .requiredOption('-d, --domain <domain>', 'Cloudonix domain to use')
     .requiredOption('-p, --provider <provider>', 'Service provider name (currently supports: vapi)')
     .requiredOption('-n, --number <number>', 'Phone number to add (E.164 format)')
-    .requiredOption('-a, --assistant <assistantId>', 'Assistant ID to associate with the number')
     .option('--debug', 'Enable debug mode for detailed logging')
     .action(addNumberCommand);
 
