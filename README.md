@@ -23,7 +23,7 @@ npm link
 
 ### Install from npm
 ```bash
-npm install -f cloudonix-voiceai-connector
+npm install -f cx-vcc
 ```
 This will install the CLI tool globally on your system.
 
