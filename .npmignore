@@ -1,0 +1,33 @@
+# Development files
+node_modules/
+.git/
+.github/
+.vscode/
+.idea/
+
+# Environment variables
+.env
+.env.*
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test files
+test/
+tests/
+__tests__/
+coverage/
+
+# Temp files
+.DS_Store
+.cache/
+tmp/
+temp/
+
+# Config files
+.eslintrc*
+.prettierrc*
+.editorconfig
+.gitignore
+tsconfig.json
