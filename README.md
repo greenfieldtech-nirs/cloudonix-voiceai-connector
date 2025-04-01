@@ -5,8 +5,34 @@ A command-line tool to establish SIP trunks between Cloudonix and Voice AI provi
 ## Installation
 
 ### Prerequisites
-- Node.js v14 or higher
-- npm v6 or higher
+- Node.js v22 or higher
+- npm v10 or higher
+
+#### Installing `node` and `npm` (optional)
+If you currently don't have `node` and `npm` installed on your local machine, here is a quick installation
+guide to get you started using the `nvm` tool.
+
+1. Installing `nvm`
+```bash
+curl -sL https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.0/install.sh -o install_nvm.sh
+chmod +x install_nvm.sh
+./install_nvm.sh
+```
+After the installation completes, open a new terminal window to continue the installation.
+
+2. Verify `nvm`
+```bash
+command -v nvm
+```
+The output should simplט say `nvm`.
+
+3. Install `node` and `npm`
+```bash
+nvm install --lts
+```
+This will install the latest version of both `node` and `npm`.
+
+Now, you can continue with the next installation steps normally.
 
 ### Install from Source
 ```bash
