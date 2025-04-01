@@ -11,7 +11,7 @@ A command-line tool to establish SIP trunks between Cloudonix and Voice AI provi
 ### Install from Source
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/greenfieldtech-nirs/cloudonix-voiceai-connector.git
 cd cloudonix-voiceai-connector
 
 # Install dependencies
@@ -23,7 +23,7 @@ npm link
 
 ### Install from npm
 ```bash
-npm install -f cx-vcc
+npm install -g cx-vcc
 ```
 This will install the CLI tool globally on your system.
 
