@@ -45,7 +45,7 @@ program
 program
     .command('service')
     .description('Configure a Voice AI service provider')
-    .requiredOption('-p, --provider <provider>', 'Service provider name (currently supports: vapi)')
+    .requiredOption('-p, --provider <provider>', 'Service provider name (currently supports: vapi, retell)')
     .requiredOption('-a, --apikey <apikey>', 'API key for the service provider')
     .requiredOption('-n, --name <n>', 'Name for the SIP trunk (if creating a trunk)')
     .requiredOption('-d, --domain <domain>', 'Cloudonix domain to use for SIP trunk')
@@ -57,8 +57,8 @@ program
     .command('addnumber')
     .description('Add a phone number to a Voice AI provider')
     .requiredOption('-d, --domain <domain>', 'Cloudonix domain to use')
-    .requiredOption('-p, --provider <provider>', 'Service provider name (currently supports: vapi)')
-    .requiredOption('-n, --number <number>', 'Phone number to add (E.164 format)')
+    .requiredOption('-p, --provider <provider>', 'Service provider name (currently supports: vapi, retell)')
+    .requiredOption('-n, --number <number>', 'Phone number to add (E.164 format mandatory)')
     .option('--debug', 'Enable debug mode for detailed logging')
     .action(addNumberCommand);
 

@@ -24,7 +24,7 @@ After the installation completes, open a new terminal window to continue the ins
 ```bash
 command -v nvm
 ```
-The output should simplט say `nvm`.
+The output should simply say `nvm`.
 
 3. Install `node` and `npm`
 ```bash
