@@ -1,8 +1,19 @@
 const axios = require('axios');
 const { logApiRequest, logApiResponse, logApiError, debugLog } = require('../utils/debug');
+const IVoiceAgentProvider = require('../interfaces/IVoiceAgentProvider');
 
-class VapiApiService {
+/**
+ * VAPI Voice Agent Provider implementation
+ * @implements {IVoiceAgentProvider}
+ */
+class VapiAgentProvider extends IVoiceAgentProvider {
+  /**
+   * Create a new VAPI agent provider instance
+   * @param {string} apiKey - The VAPI API key
+   * @param {string} baseUrl - The base URL for the VAPI API
+   */
   constructor(apiKey, baseUrl = 'https://api.vapi.ai') {
+    super();
     this.apiKey = apiKey;
     this.baseUrl = baseUrl;
 
@@ -17,6 +28,10 @@ class VapiApiService {
     this._setupInterceptors();
   }
 
+  /**
+   * Set up request and response interceptors for logging
+   * @private
+   */
   _setupInterceptors() {
     this.client.interceptors.request.use(
       (config) => {
@@ -31,7 +46,7 @@ class VapiApiService {
         return config;
       },
       (error) => {
-        logApiError(error, 'vapiApi.js', this._getLineNumber());
+        logApiError(error, 'VapiAgentProvider.js', this._getLineNumber());
         if (process.argv.includes('--debug')) {
           console.error('\n=== VAPI API Request Error ===');
           console.error(error);
@@ -54,7 +69,7 @@ class VapiApiService {
         return response;
       },
       (error) => {
-        logApiError(error, 'vapiApi.js', this._getLineNumber());
+        logApiError(error, 'VapiAgentProvider.js', this._getLineNumber());
         if (process.argv.includes('--debug')) {
           console.error('\n=== VAPI API Error Response ===');
           if (error.response) {
@@ -74,10 +89,19 @@ class VapiApiService {
     );
   }
 
+  /**
+   * Get the current line number for better error reporting
+   * @private
+   */
   _getLineNumber() {
     return new Error().stack.split('\n')[2].match(/:(\d+):/)[1];
   }
 
+  /**
+   * Verify that the API key is valid
+   * @returns {Promise<boolean>} True if the API key is valid
+   * @throws {Error} If the API key is invalid or verification fails
+   */
   async verifyApiKey() {
     try {
       await this.client.get('/assistant');
@@ -94,6 +118,11 @@ class VapiApiService {
     }
   }
 
+  /**
+   * Get all phone numbers configured in VAPI
+   * @returns {Promise<Array>} Array of phone number objects
+   * @throws {Error} If fetching phone numbers fails
+   */
   async getPhoneNumbers() {
     try {
       const response = await this.client.get('/phone-number');
@@ -102,7 +131,13 @@ class VapiApiService {
       this._handleError(error, 'Failed to retrieve VAPI phone numbers');
     }
   }
-  
+
+  /**
+   * Get detailed information for a specific phone number
+   * @param {string} id - The ID of the phone number
+   * @returns {Promise<Object>} Detailed phone number information
+   * @throws {Error} If fetching phone number details fails
+   */
   async getPhoneNumberDetails(id) {
     try {
       const response = await this.client.get(`/phone-number/${id}`);
@@ -111,7 +146,13 @@ class VapiApiService {
       this._handleError(error, `Failed to retrieve VAPI phone number details for ID: ${id}`);
     }
   }
-  
+
+  /**
+   * Get detailed information for a credential
+   * @param {string} id - The ID of the credential
+   * @returns {Promise<Object>} Detailed credential information
+   * @throws {Error} If fetching credential details fails
+   */
   async getCredentialDetails(id) {
     try {
       const response = await this.client.get(`/credential/${id}`);
@@ -121,6 +162,13 @@ class VapiApiService {
     }
   }
 
+  /**
+   * Create a SIP trunk connection in VAPI
+   * @param {string} name - Name for the SIP trunk
+   * @param {string} inboundSipUri - The SIP URI for inbound calls
+   * @returns {Promise<Object>} The created SIP trunk connection
+   * @throws {Error} If creating the SIP trunk fails
+   */
   async createSipTrunkConnection(name, inboundSipUri) {
     try {
       const response = await this.client.post('/credential', {
@@ -134,7 +182,15 @@ class VapiApiService {
     }
   }
 
-  async addByoPhoneNumber(name, phoneNumber, credentialId) {
+  /**
+   * Add a BYO phone number to VAPI
+   * @param {string} name - Name for the phone number
+   * @param {string} phoneNumber - The phone number in E.164 format
+   * @param {string} credentialId - The credential ID to use for this number
+   * @returns {Promise<Object>} The added phone number details
+   * @throws {Error} If adding the phone number fails
+   */
+  async addPhoneNumber(name, phoneNumber, credentialId) {
     try {
       const response = await this.client.post('/phone-number', {
         provider: 'byo-phone-number',
@@ -149,6 +205,13 @@ class VapiApiService {
     }
   }
 
+  /**
+   * Handle API errors in a consistent manner
+   * @private
+   * @param {Error} error - The error object from the API request
+   * @param {string} message - The base error message
+   * @throws {Error} A formatted error with details
+   */
   _handleError(error, message) {
     let errorMessage = message;
 
@@ -167,4 +230,4 @@ class VapiApiService {
   }
 }
 
-module.exports = VapiApiService;
+module.exports = VapiAgentProvider;

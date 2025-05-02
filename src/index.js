@@ -67,6 +67,7 @@ program
     .command('display')
     .description('Display configuration information')
     .option('-d, --domain <domain>', 'Specific domain to display')
+    .option('-r, --remote', 'Display remote configuration from service providers')
     .option('--debug', 'Enable debug mode for detailed logging')
     .action(displayCommand);
 
