@@ -31,6 +31,10 @@ function getConfig() {
         retell: {
             apiKey: process.env.RETELL_API_KEY || '',
             apiUrl: process.env.RETELL_API_URL || ''
+        },
+        elevenlabs: {
+            apiKey: process.env.ELEVENLABS_API_KEY || '',
+            apiUrl: process.env.ELEVENLABS_API_URL || ''
         }
     };
 
@@ -47,6 +51,10 @@ function getConfig() {
                 retell: {
                     ...defaultConfig.retell,
                     ...(fileConfig.retell || {})
+                },
+                elevenlabs: {
+                    ...defaultConfig.elevenlabs,
+                    ...(fileConfig.elevenlabs || {})
                 }
             };
         }

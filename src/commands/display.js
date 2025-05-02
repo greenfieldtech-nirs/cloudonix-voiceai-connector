@@ -2,6 +2,7 @@ const chalk = require('chalk');
 const { getConfig, getDomainConfig } = require('../utils/config');
 const VapiApiService = require('../services/vapiApi');
 const RetellApiService = require('../services/retellApi');
+const ElevenLabsAgentProvider = require('../services/11LabsAgentProvider');
 
 async function displayCommand(options) {
     const { domain, remote } = options;
@@ -27,6 +28,7 @@ async function displayCommand(options) {
 
         await displayProviderConfig('VAPI', config.vapi, remote);
         await displayProviderConfig('Retell', config.retell, remote);
+        await displayProviderConfig('11Labs', config.elevenlabs, remote);
     }
 }
 
@@ -38,7 +40,7 @@ function displayDomainConfig(domainName, domainConfig) {
     console.log(chalk.cyan('Inbound SIP URI:'), domainConfig.inboundSipUri || 'Not set');
     console.log(chalk.cyan('Tenant:'), domainConfig.tenant || 'Not set');
 
-    const providers = ['VAPI', 'Retell'];
+    const providers = ['VAPI', 'Retell', '11Labs'];
     const phoneNumbers = {};
 
     providers.forEach(providerName => {
@@ -131,33 +133,29 @@ async function displayProviderConfig(providerName, providerConfig, remote) {
                 } else if (providerName === 'Retell') {
                     const retellService = new RetellApiService(providerConfig.apiKey, providerConfig.apiUrl);
                     const phoneNumbersData = await retellService.getPhoneNumbers();
-                    
                     if (phoneNumbersData && Array.isArray(phoneNumbersData)) {
-                        remoteNumbers = phoneNumbersData.map(num => {
-                            // Convert timestamp to human readable form
-                            let lastModified = null;
-                            if (num.last_modification_timestamp) {
-                                // Check if it's already a timestamp value or needs conversion
-                                const timestamp = parseInt(num.last_modification_timestamp);
-                                if (!isNaN(timestamp)) {
-                                    // If it's a small number (seconds), multiply by 1000 for milliseconds
-                                    // If it's already in milliseconds (13 digits), use as is
-                                    const timestampMs = timestamp < 10000000000 ? timestamp * 1000 : timestamp;
-                                    lastModified = new Date(timestampMs).toLocaleString();
-                                } else {
-                                    // If it's not a number, just use the string value
-                                    lastModified = num.last_modification_timestamp;
-                                }
-                            }
-                            
-                            return {
-                                id: num.phone_number || 'unknown',
-                                number: num.phone_number || 'unknown',
-                                // Include all properties except name (which we'll handle separately)
-                                ...num,
-                                lastModified
-                            };
-                        });
+                        remoteNumbers = phoneNumbersData.map(num => ({
+                            id: num.phone_number || 'unknown',
+                            number: num.phone_number || 'unknown',
+                            phoneType: num.phone_number_type || 'N/A',
+                            areaCode: num.area_code,
+                            inboundAgentId: num.inbound_agent_id,
+                            outboundAgentId: num.outbound_agent_id,
+                            lastModified: num.last_modification_timestamp ? new Date(parseInt(num.last_modification_timestamp) * 1000).toLocaleString() : null
+                        }));
+                    }
+                } else if (providerName === '11Labs') {
+                    const elevenLabsProvider = new ElevenLabsAgentProvider(providerConfig.apiKey, providerConfig.apiUrl);
+                    const phoneNumbersData = await elevenLabsProvider.getPhoneNumbers();
+                    if (phoneNumbersData && Array.isArray(phoneNumbersData)) {
+                        remoteNumbers = phoneNumbersData.map(num => ({
+                            id: num.id || 'unknown',
+                            number: num.phoneNumber || num.number || 'unknown',
+                            name: num.name || 'N/A',
+                            voiceId: num.voiceId || 'N/A',
+                            model: num.model || 'N/A',
+                            createdAt: num.createdAt ? new Date(num.createdAt).toLocaleString() : 'N/A'
+                        }));
                     }
                 }
                 
@@ -167,7 +165,6 @@ async function displayProviderConfig(providerName, providerConfig, remote) {
                     process.stdout.write('\r' + ' '.repeat(50) + '\r');
                 } catch (err) {
                     // In case the interval was already cleared
-                    console.error(chalk.red(`Error clearing animation: ${err.message}`));
                 }
                 
                 if (remoteNumbers.length > 0) {
@@ -177,12 +174,14 @@ async function displayProviderConfig(providerName, providerConfig, remote) {
                             sipUri = `sip:${num.number}@sip.vapi.ai`;
                         } else if (providerName === 'Retell') {
                             sipUri = `sip:${num.number}@5t4n6j0wnrl.sip.livekit.cloud:5060;transport=tcp`;
+                        } else if (providerName === '11Labs') {
+                            sipUri = `sip:${num.number}@sip.elevenlabs.io`;
                         }
                         
                         console.log(chalk.green(`  - Number: ${num.number} (${sipUri})`));
                         
-                        // Only show Name for VAPI, not for Retell
-                        if (providerName === 'VAPI') {
+                        // Only show Name for VAPI and 11Labs, not for Retell
+                        if (providerName === 'VAPI' || providerName === '11Labs') {
                             console.log(chalk.yellow(`    Name: ${num.name}`));
                         }
                         
@@ -196,7 +195,6 @@ async function displayProviderConfig(providerName, providerConfig, remote) {
                             } else {
                                 // Display basic details
                                 console.log(chalk.yellow(`    Status: ${num.status || 'N/A'}`));
-                                console.log(chalk.yellow(`    Name: ${num.name || 'N/A'}`));
                                 
                                 if (num.credentialId) {
                                     console.log(chalk.yellow(`    Credential ID: ${num.credentialId}`));
@@ -296,26 +294,56 @@ async function displayProviderConfig(providerName, providerConfig, remote) {
                         } else if (providerName === 'Retell') {
                             // Display all available properties in the Retell response
                             Object.entries(num).forEach(([key, value]) => {
-                                // Skip properties we already displayed, name, last_modification_timestamp, or null/undefined values
+                                // Skip properties we already displayed, name, or null/undefined values
                                 if (key !== 'id' && 
                                     key !== 'number' && 
                                     key !== 'name' && 
-                                    key !== 'nickname' &&
-                                    key !== 'last_modification_timestamp' && 
                                     value != null) {
                                     
-                                    // Display last modified time in human-readable format
-                                    if (key === 'lastModified') {
-                                        console.log(chalk.yellow(`    Last Modified: ${value}`));
-                                    } 
-                                    // Display other properties
-                                    else if (typeof value === 'object') {
+                                    // Display properties
+                                    if (typeof value === 'object') {
                                         console.log(chalk.yellow(`    ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${JSON.stringify(value)}`));
                                     } else {
                                         console.log(chalk.yellow(`    ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}`));
                                     }
                                 }
                             });
+                        } else if (providerName === '11Labs') {
+                            // Display 11Labs specific properties
+                            if (num.error) {
+                                console.log(chalk.red(`    Error: ${num.error}`));
+                            } else {
+                                // Display basic details for 11Labs
+                                if (num.model) {
+                                    console.log(chalk.yellow(`    Model: ${num.model}`));
+                                }
+                                
+                                if (num.voiceId) {
+                                    console.log(chalk.yellow(`    Voice ID: ${num.voiceId}`));
+                                }
+                                
+                                if (num.createdAt) {
+                                    console.log(chalk.yellow(`    Created: ${num.createdAt}`));
+                                }
+                                
+                                // Display additional properties dynamically
+                                Object.entries(num).forEach(([key, value]) => {
+                                    if (key !== 'id' && 
+                                        key !== 'number' && 
+                                        key !== 'name' && 
+                                        key !== 'model' &&
+                                        key !== 'voiceId' &&
+                                        key !== 'createdAt' &&
+                                        value != null) {
+                                        
+                                        if (typeof value === 'object') {
+                                            console.log(chalk.yellow(`    ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${JSON.stringify(value)}`));
+                                        } else {
+                                            console.log(chalk.yellow(`    ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}`));
+                                        }
+                                    }
+                                });
+                            }
                         }
                         
                         console.log();
@@ -353,6 +381,8 @@ function displayPhoneNumbers(providerPhoneNumbers) {
                         sipUri = `sip:${number}@sip.vapi.ai`;
                     } else if (providerName === 'Retell') {
                         sipUri = `sip:${number}@5t4n6j0wnrl.sip.livekit.cloud:5060;transport=tcp`;
+                    } else if (providerName === '11Labs') {
+                        sipUri = `sip:${number}@sip.elevenlabs.io`;
                     }
                     console.log(chalk.yellow(`        - Number: ${number} (${sipUri})`));
                 });
