@@ -2,6 +2,7 @@
 
 const { program } = require('commander');
 const pkg = require('../package.json');
+const chalk = require('chalk');
 require('dotenv').config();
 
 // Import commands
@@ -15,14 +16,36 @@ const syncCommand = require('./commands/sync');
 // Import utilities
 const { setDebugMode } = require('./utils/debug');
 
+// ASCII Art Banner
+const banner = `
+ .d8888b.  888                        888                   d8b          
+d88P  Y88b 888                        888                   Y8P          
+888    888 888                        888                                
+888        888  .d88b.  888  888  .d88888  .d88b.  88888b.  888 888  888 
+888        888 d88""88b 888  888 d88" 888 d88""88b 888 "88b 888 \`Y8bd8P' 
+888    888 888 888  888 888  888 888  888 888  888 888  888 888   X88K   
+Y88b  d88P 888 Y88..88P Y88b 888 Y88b 888 Y88..88P 888  888 888 .d8""8b. 
+ "Y8888P"  888  "Y88P"   "Y88888  "Y88888  "Y88P"  888  888 888 888  888 
+                                                                          
+ v${pkg.version} - Cloudonix Voice AI Connector
+`;
+
 program
     .name('cx-vcc')
     .description('Cloudonix Voice AI Connector - Setup SIP trunks between Cloudonix and Voice AI providers')
-    .version(pkg.version)
+    .version(pkg.version, '-v, --version', 'Output the current version')
     .hook('preAction', (thisCommand, actionCommand) => {
       // Set debug mode based on the global flag
       const options = thisCommand.opts();
       setDebugMode(options.debug || false);
+    });
+
+// Add a special command for fancy version display
+program
+    .command('banner')
+    .description('Display ASCII art banner')
+    .action(() => {
+        console.log(chalk.cyan(banner));
     });
 
 // Configure command
@@ -83,7 +106,8 @@ program
 
 program.parse(process.argv);
 
-// Display help if no arguments provided
+// Display banner and help if no arguments provided
 if (!process.argv.slice(2).length) {
-  program.outputHelp();
+  console.log(chalk.cyan(banner));
+  program.help();
 }
