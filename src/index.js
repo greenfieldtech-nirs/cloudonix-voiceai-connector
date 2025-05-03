@@ -76,6 +76,8 @@ program
 program
     .command('sync')
     .description('Synchronize local configuration with remote service providers')
+    .option('-d, --domain <domain>', 'Limit sync to a specific Cloudonix domain')
+    .option('-p, --provider <provider>', 'Limit sync to a specific service provider (vapi, retell, 11labs)')
     .option('--debug', 'Enable debug mode for detailed logging')
     .action(syncCommand);
 

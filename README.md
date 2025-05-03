@@ -181,6 +181,12 @@ or
 cx-vcc display --domain example.com
 ```
 
+Display remote configuration from service providers:
+
+```bash
+cx-vcc display --remote
+```
+
 The displayed information includes:
 - Domain name
 - API keys (masked for security)
@@ -191,6 +197,40 @@ The displayed information includes:
   - SIP URI
 
 This command is useful for verifying your current setup and troubleshooting configuration issues.
+
+### Synchronize Local and Remote Configurations
+
+The `sync` command helps you identify and remove phone numbers that exist in your local configuration but no longer exist in the remote service provider:
+
+```bash
+cx-vcc sync
+```
+
+You can limit the sync to a specific domain:
+
+```bash
+cx-vcc sync --domain example.com
+```
+
+Or to a specific provider:
+
+```bash
+cx-vcc sync --provider vapi
+cx-vcc sync --provider retell
+cx-vcc sync --provider 11labs
+```
+
+Or both:
+
+```bash
+cx-vcc sync --domain example.com --provider vapi
+```
+
+This will:
+1. Fetch all phone numbers from the remote service provider
+2. Compare with phone numbers in your local configuration
+3. Remove phone numbers from local configuration that don't exist remotely
+4. Display a summary of changes made
 
 ### Debug Mode
 
@@ -256,7 +296,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/yourusername/cloudonix-voiceai-connector/tags).
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/greenfieldtech-nirs/cloudonix-voiceai-connector/tags).
 
 ## License
 
