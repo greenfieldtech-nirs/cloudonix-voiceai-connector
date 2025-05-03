@@ -5,17 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.7] - 2025-05-05
+## [Unreleased]
+
+## [0.2.0] - 2025-05-06
+
+This release marks a significant milestone with the addition of full 11Labs support and the introduction of the sync command for managing phone numbers between local and remote configurations.
 
 ### Added
 - Added support for 11Labs as a new voice agent provider
 - Integrated the official elevenlabs SDK
-- Updated service command to support 11Labs configuration (no longer requires domain parameter)
+- Updated service command to support 11Labs configuration
 - Added phone number management for 11Labs
 - Implemented addnumber functionality for 11Labs provider
 - Added support for displaying remote 11Labs phone numbers with the display --remote command
 - Added new `sync` command to synchronize local configuration with remote service providers
 - Added optional domain and provider filtering to the sync command
+- Added ASCII art banner that displays on each execution of the tool
+- Added developer resources (Home, Documentation, Discord, GitHub) to the banner
 
 ### Changed
 - Made domain parameter optional for service command
@@ -35,14 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved 11Labs API response handling with multiple fallback mechanisms and more detailed debug output
 - Fixed 11Labs API URL display in the configuration output
 - Fixed sync command to correctly handle phone numbers stored under both 'elevenlabs' and '11labs' keys
-
-## [Unreleased]
-
-## [0.1.8] - 2025-05-06
-
-### Added
-- Added ASCII art banner that displays on each execution of the tool
-- Added developer resources (Home, Documentation, Discord, GitHub) to the banner
 
 ## [0.1.6] - 2025-05-02
 
