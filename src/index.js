@@ -29,7 +29,8 @@ Y88b  d88P 888 Y88..88P Y88b 888 Y88b 888 Y88..88P 888  888 888 .d8""8b.
                                                                           
  v${pkg.version} - Cloudonix Voice AI Connector
 
- Developer Website: https://developers.cloudonix.com
+ Home: https://cloudonix.com
+ Documentation: https://developers.cloudonix.com
  Discord: https://discord.gg/etCGgNh9VV
  GitHub: https://github.com/cloudonix
 `;

@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added ASCII art banner that displays on each execution of the tool
-- Added developer resources (website, Discord, GitHub) to the banner
+- Added developer resources (Home, Documentation, Discord, GitHub) to the banner
 
 ## [0.1.6] - 2025-05-02
 
