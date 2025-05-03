@@ -10,6 +10,7 @@ const deleteCommand = require('./commands/delete');
 const serviceCommand = require('./commands/service');
 const addNumberCommand = require('./commands/addnumber');
 const displayCommand = require('./commands/display');
+const syncCommand = require('./commands/sync');
 
 // Import utilities
 const { setDebugMode } = require('./utils/debug');
@@ -70,6 +71,13 @@ program
     .option('-r, --remote', 'Display remote configuration from service providers')
     .option('--debug', 'Enable debug mode for detailed logging')
     .action(displayCommand);
+
+// Sync command
+program
+    .command('sync')
+    .description('Synchronize local configuration with remote service providers')
+    .option('--debug', 'Enable debug mode for detailed logging')
+    .action(syncCommand);
 
 program.parse(process.argv);
 

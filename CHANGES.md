@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added phone number management for 11Labs
 - Implemented addnumber functionality for 11Labs provider
 - Added support for displaying remote 11Labs phone numbers with the display --remote command
+- Added new `sync` command to synchronize local configuration with remote service providers
 
 ### Changed
 - Made domain parameter optional for service command
