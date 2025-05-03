@@ -38,9 +38,11 @@
     "chalk": "^4.1.2",
     "commander": "^13.1.0",
     "dotenv": "^16.4.7",
-    "js-yaml": "^4.1.0",
+    "elevenlabs": "^1.57.0",
     "fs-extra": "^11.3.0",
+    "inquirer": "^8.1.2",
+    "js-yaml": "^4.1.0",
     "ora": "^5.4.1",
-    "inquirer": "^8.1.2"
+    "retell-sdk": "^4.28.0"
   }
 }

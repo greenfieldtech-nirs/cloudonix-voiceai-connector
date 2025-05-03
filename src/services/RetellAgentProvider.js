@@ -1,5 +1,5 @@
-const axios = require('axios');
-const { logApiRequest, logApiResponse, logApiError, debugLog } = require('../utils/debug');
+const { Retell } = require('retell-sdk');
+const { logApiError, debugLog } = require('../utils/debug');
 const { getConfig, saveConfig } = require('../utils/config');
 const IVoiceAgentProvider = require('../interfaces/IVoiceAgentProvider');
 
@@ -18,73 +18,13 @@ class RetellAgentProvider extends IVoiceAgentProvider {
     this.apiKey = apiKey;
     this.baseUrl = baseUrl;
 
-    this.client = axios.create({
-      baseURL: this.baseUrl,
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json'
-      }
+    // Create Retell SDK client
+    this.client = new Retell({
+      apiKey: this.apiKey,
+      basePath: this.baseUrl
     });
 
-    this._setupInterceptors();
     this._updateConfig();
-  }
-
-  /**
-   * Set up request and response interceptors for logging
-   * @private
-   */
-  _setupInterceptors() {
-    this.client.interceptors.request.use(
-      (config) => {
-        if (process.argv.includes('--debug')) {
-          console.log('\n=== Retell API Request ===');
-          console.log(`${config.method.toUpperCase()} ${config.url}`);
-          console.log('Headers:', JSON.stringify(config.headers, null, 2));
-          console.log('Request Data:', JSON.stringify(config.data, null, 2));
-          console.log('========================\n');
-        }
-        return config;
-      },
-      (error) => {
-        if (process.argv.includes('--debug')) {
-          console.error('\n=== Retell API Request Error ===');
-          console.error(error);
-          console.error('================================\n');
-        }
-        return Promise.reject(error);
-      }
-    );
-
-    this.client.interceptors.response.use(
-      (response) => {
-        if (process.argv.includes('--debug')) {
-          console.log('\n=== Retell API Response ===');
-          console.log(`Status: ${response.status} ${response.statusText}`);
-          console.log('Headers:', JSON.stringify(response.headers, null, 2));
-          console.log('Response Data:', JSON.stringify(response.data, null, 2));
-          console.log('==========================\n');
-        }
-        return response;
-      },
-      (error) => {
-        if (process.argv.includes('--debug')) {
-          console.error('\n=== Retell API Error Response ===');
-          if (error.response) {
-            console.error(`Status: ${error.response.status} ${error.response.statusText}`);
-            console.error('Headers:', JSON.stringify(error.response.headers, null, 2));
-            console.error('Error Data:', JSON.stringify(error.response.data, null, 2));
-          } else if (error.request) {
-            console.error('No response received');
-            console.error('Request:', error.request);
-          } else {
-            console.error('Error:', error.message);
-          }
-          console.error('================================\n');
-        }
-        return Promise.reject(error);
-      }
-    );
   }
 
   /**
@@ -110,20 +50,37 @@ class RetellAgentProvider extends IVoiceAgentProvider {
   }
 
   /**
+   * Log debug information
+   * @private
+   * @param {string} message - The debug message
+   * @param {any} data - The data to log
+   */
+  _logDebug(message, data) {
+    if (process.argv.includes('--debug')) {
+      console.log(`\n=== Retell API ${message} ===`);
+      if (data) {
+        console.log(JSON.stringify(data, null, 2));
+      }
+      console.log('===========================\n');
+    }
+  }
+
+  /**
    * Verify that the API key is valid
    * @returns {Promise<boolean>} True if the API key is valid
    * @throws {Error} If the API key is invalid or verification fails
    */
   async verifyApiKey() {
     try {
-      await this.client.get('/list-agents');
+      // List agents to verify API key is valid
+      await this.client.agents.listAgents();
       return true;
     } catch (error) {
-      if (error.response && error.response.status === 403) {
+      if (error.status === 403 || error.status === 401) {
         throw new Error('Invalid Retell API key: Authentication failed');
       }
-      if (error.response && error.response.status !== 403) {
-        debugLog('Warning: Retell API returned a non-403 error, assuming API key is valid');
+      if (error.status !== 403 && error.status !== 401) {
+        debugLog('Warning: Retell API returned a non-authorization error, assuming API key is valid');
         return true;
       }
       this._handleError(error, 'Failed to verify Retell API key');
@@ -137,10 +94,31 @@ class RetellAgentProvider extends IVoiceAgentProvider {
    */
   async getPhoneNumbers() {
     try {
-      const response = await this.client.get('/list-phone-numbers');
-      return response.data;
+      const response = await this.client.phoneNumbers.listPhoneNumbers();
+      this._logDebug('Phone Numbers Response', response);
+      return response;
     } catch (error) {
       this._handleError(error, 'Failed to retrieve Retell phone numbers');
+    }
+  }
+
+  /**
+   * Get detailed information for a specific phone number
+   * @param {string} phoneNumber - The phone number in E.164 format
+   * @returns {Promise<Object>} Detailed phone number information
+   * @throws {Error} If fetching phone number details fails
+   */
+  async getPhoneNumberDetails(phoneNumber) {
+    try {
+      // Ensure the phone number has the '+' prefix
+      const formattedNumber = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
+      const response = await this.client.phoneNumbers.getPhoneNumber({
+        phoneNumber: formattedNumber
+      });
+      this._logDebug('Phone Number Details', response);
+      return response;
+    } catch (error) {
+      this._handleError(error, `Failed to retrieve Retell phone number details for: ${phoneNumber}`);
     }
   }
 
@@ -183,14 +161,15 @@ class RetellAgentProvider extends IVoiceAgentProvider {
         throw new Error(`Domain ${domainName} not found or missing inbound SIP URI`);
       }
 
-      const response = await this.client.post('/import-phone-number', {
-        phone_number: phoneNumber,
-        termination_uri: domainConfig.inboundSipUri
+      const response = await this.client.phoneNumbers.importPhoneNumber({
+        phoneNumber,
+        terminationUri: domainConfig.inboundSipUri
       });
 
-      this._updatePhoneNumberConfig(config, phoneNumber, domainName, response.data.last_modification_timestamp);
-
-      return response.data;
+      this._updatePhoneNumberConfig(config, phoneNumber, domainName, response.lastModificationTimestamp);
+      this._logDebug('Import Phone Number Response', response);
+      
+      return response;
     } catch (error) {
       this._handleError(error, 'Failed to import phone number to Retell');
     }
@@ -228,18 +207,69 @@ class RetellAgentProvider extends IVoiceAgentProvider {
   _handleError(error, message) {
     let errorMessage = message;
 
-    if (error.response) {
+    // Log detailed error in debug mode
+    if (process.argv.includes('--debug')) {
+      console.error('\n=== Retell API Error ===');
+      console.error(message);
+      console.error(error);
+      console.error('========================\n');
+    }
+
+    // Format error message based on error type
+    if (error.status) {
+      // SDK error format
+      const data = error.body || {};
+      errorMessage += data.error || data.message 
+        ? `: ${data.error || data.message}`
+        : `: Status ${error.status}`;
+    } else if (error.response) {
+      // Axios error format (fallback)
       const { status, data } = error.response;
       errorMessage += data?.error || data?.message 
         ? `: ${data.error || data.message}`
         : `: Status ${status}`;
-    } else if (error.request) {
-      errorMessage += ': No response received from server';
     } else {
-      errorMessage += `: ${error.message}`;
+      // Generic error
+      errorMessage += error.message ? `: ${error.message}` : '';
     }
 
+    // Log error for tracking
+    logApiError(error, 'RetellAgentProvider.js', this._getLineNumber());
+
     throw new Error(errorMessage);
+  }
+
+  /**
+   * Get a list of agents configured in Retell
+   * @returns {Promise<Array>} Array of agent objects
+   * @throws {Error} If fetching agents fails
+   */
+  async getAgents() {
+    try {
+      const response = await this.client.agents.listAgents();
+      this._logDebug('Agents Response', response);
+      return response;
+    } catch (error) {
+      this._handleError(error, 'Failed to retrieve Retell agents');
+    }
+  }
+
+  /**
+   * Get detailed information about a specific agent
+   * @param {string} agentId - The agent ID
+   * @returns {Promise<Object>} Detailed agent information
+   * @throws {Error} If fetching agent details fails
+   */
+  async getAgentDetails(agentId) {
+    try {
+      const response = await this.client.agents.getAgent({
+        agentId
+      });
+      this._logDebug('Agent Details', response);
+      return response;
+    } catch (error) {
+      this._handleError(error, `Failed to retrieve Retell agent details for: ${agentId}`);
+    }
   }
 }
 

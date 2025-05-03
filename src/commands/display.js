@@ -65,7 +65,36 @@ async function displayProviderConfig(providerName, providerConfig, remote) {
     console.log(chalk.blue.bold(`\n${providerName} Configuration:`));
     if (providerConfig) {
         console.log(chalk.cyan('API Key:'), providerConfig.apiKey ? '********' : 'Not set');
-        console.log(chalk.cyan('API URL:'), providerConfig.apiUrl || 'Not set');
+        
+        // Check for apiUrl differently depending on provider
+        let apiUrl = 'Not set';
+        if (providerConfig.apiUrl) {
+            apiUrl = providerConfig.apiUrl;
+        } else if (providerName === '11Labs' && providerConfig.apiUrl) {
+            // For 11Labs, we use a different property name
+            apiUrl = providerConfig.apiUrl;
+        }
+        
+        // If still not set, use default API URLs for each provider
+        if (apiUrl === 'Not set') {
+            if (providerName === 'VAPI') {
+                apiUrl = 'https://api.vapi.ai (default)';
+            } else if (providerName === 'Retell') {
+                apiUrl = 'https://api.retellai.com (default)';
+            } else if (providerName === '11Labs') {
+                apiUrl = 'https://api.elevenlabs.io (default)';
+            }
+        }
+        
+        console.log(chalk.cyan('API URL:'), apiUrl);
+        
+        // Debug info to see the actual config structure
+        if (process.argv.includes('--debug')) {
+            console.log('\n=== Provider Config Debug ===');
+            console.log('Provider:', providerName);
+            console.log('Config Keys:', Object.keys(providerConfig));
+            console.log('========================\n');
+        }
         
         // Display local phone numbers
         displayPhoneNumbers({ [providerName]: providerConfig.phoneNumbers });
@@ -133,29 +162,88 @@ async function displayProviderConfig(providerName, providerConfig, remote) {
                 } else if (providerName === 'Retell') {
                     const retellService = new RetellApiService(providerConfig.apiKey, providerConfig.apiUrl);
                     const phoneNumbersData = await retellService.getPhoneNumbers();
+                    
+                    // Log detailed response for debugging
+                    if (process.argv.includes('--debug')) {
+                        console.log('\n=== Retell Phone Numbers Response ===');
+                        console.log(JSON.stringify(phoneNumbersData, null, 2));
+                        console.log('===================================\n');
+                    }
+                    
                     if (phoneNumbersData && Array.isArray(phoneNumbersData)) {
                         remoteNumbers = phoneNumbersData.map(num => ({
-                            id: num.phone_number || 'unknown',
-                            number: num.phone_number || 'unknown',
-                            phoneType: num.phone_number_type || 'N/A',
-                            areaCode: num.area_code,
-                            inboundAgentId: num.inbound_agent_id,
-                            outboundAgentId: num.outbound_agent_id,
-                            lastModified: num.last_modification_timestamp ? new Date(parseInt(num.last_modification_timestamp) * 1000).toLocaleString() : null
+                            id: num.phone_number || num.phoneNumber || 'unknown',
+                            number: num.phone_number || num.phoneNumber || 'unknown',
+                            phoneType: num.phone_number_type || num.phoneNumberType || 'N/A',
+                            areaCode: num.area_code || num.areaCode,
+                            inboundAgentId: num.inbound_agent_id || num.inboundAgentId,
+                            outboundAgentId: num.outbound_agent_id || num.outboundAgentId,
+                            lastModified: num.last_modification_timestamp || num.lastModificationTimestamp ? 
+                                new Date(parseInt(num.last_modification_timestamp || num.lastModificationTimestamp) * 1000).toLocaleString() : null
                         }));
                     }
                 } else if (providerName === '11Labs') {
-                    const elevenLabsProvider = new ElevenLabsAgentProvider(providerConfig.apiKey, providerConfig.apiUrl);
-                    const phoneNumbersData = await elevenLabsProvider.getPhoneNumbers();
-                    if (phoneNumbersData && Array.isArray(phoneNumbersData)) {
-                        remoteNumbers = phoneNumbersData.map(num => ({
-                            id: num.id || 'unknown',
-                            number: num.phoneNumber || num.number || 'unknown',
-                            name: num.name || 'N/A',
-                            voiceId: num.voiceId || 'N/A',
-                            model: num.model || 'N/A',
-                            createdAt: num.createdAt ? new Date(num.createdAt).toLocaleString() : 'N/A'
-                        }));
+                    try {
+                        const elevenLabsProvider = new ElevenLabsAgentProvider(providerConfig.apiKey, providerConfig.apiUrl);
+                        const phoneNumbersData = await elevenLabsProvider.getPhoneNumbers();
+                        
+                        // Log detailed response for debugging
+                        if (process.argv.includes('--debug')) {
+                            console.log('\n=== 11Labs Phone Numbers Response ===');
+                            console.log(JSON.stringify(phoneNumbersData, null, 2));
+                            console.log('Phone Numbers Count:', Array.isArray(phoneNumbersData) ? phoneNumbersData.length : 'Not an array');
+                            console.log('===================================\n');
+                        }
+                        
+                        if (phoneNumbersData && Array.isArray(phoneNumbersData)) {
+                            remoteNumbers = phoneNumbersData.map(num => ({
+                                id: num.phone_number_id || num.id || 'unknown',
+                                number: num.phone_number || num.phoneNumber || num.number || 'unknown',
+                                label: num.label || num.name || 'N/A',
+                                termination_uri: num.termination_uri || num.terminationUri || 'N/A',
+                                status: num.status || 'N/A',
+                                created_at: num.created_at || num.createdAt || 'N/A',
+                                source: num.source || 'api'
+                            }));
+                        } else {
+                            // If we didn't get an array back, check if we have local config
+                            if (process.argv.includes('--debug')) {
+                                console.log('\n=== 11Labs Fallback to Local Config ===');
+                                console.log('Provider Config:', providerConfig);
+                                if (providerConfig.phoneNumbers) {
+                                    console.log('Local Phone Numbers:', Object.keys(providerConfig.phoneNumbers));
+                                }
+                                console.log('===================================\n');
+                            }
+                            
+                            // Try to use local config as fallback
+                            if (providerConfig.phoneNumbers && Object.keys(providerConfig.phoneNumbers).length > 0) {
+                                remoteNumbers = Object.entries(providerConfig.phoneNumbers).map(([number, details]) => ({
+                                    id: details.id || 'config-' + Date.now(),
+                                    number: number,
+                                    label: `[Local Config] ${number}`,
+                                    termination_uri: details.sipUri || 'N/A',
+                                    status: 'active (local)',
+                                    created_at: 'N/A',
+                                    source: 'local_fallback'
+                                }));
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching 11Labs phone numbers: ${error.message}`);
+                        
+                        // Try to use local config as ultimate fallback
+                        if (providerConfig.phoneNumbers && Object.keys(providerConfig.phoneNumbers).length > 0) {
+                            remoteNumbers = Object.entries(providerConfig.phoneNumbers).map(([number, details]) => ({
+                                id: details.id || 'config-' + Date.now(),
+                                number: number,
+                                label: `[Local Config] ${number}`,
+                                termination_uri: details.sipUri || 'N/A',
+                                status: 'active (local)',
+                                created_at: 'N/A',
+                                source: 'error_fallback'
+                            }));
+                        }
                     }
                 }
                 
@@ -175,14 +263,22 @@ async function displayProviderConfig(providerName, providerConfig, remote) {
                         } else if (providerName === 'Retell') {
                             sipUri = `sip:${num.number}@5t4n6j0wnrl.sip.livekit.cloud:5060;transport=tcp`;
                         } else if (providerName === '11Labs') {
-                            sipUri = `sip:${num.number}@sip.elevenlabs.io`;
+                            // Get the termination_uri from the result if available, otherwise construct a default one
+                            if (num.termination_uri) {
+                                sipUri = num.termination_uri;
+                            } else {
+                                const formattedNumber = num.number.startsWith('+') ? num.number.substring(1) : num.number;
+                                sipUri = `sip:${formattedNumber}@sip.rtc.elevenlabs.io:5060;transport=tcp`;
+                            }
                         }
                         
                         console.log(chalk.green(`  - Number: ${num.number} (${sipUri})`));
                         
                         // Only show Name for VAPI and 11Labs, not for Retell
-                        if (providerName === 'VAPI' || providerName === '11Labs') {
+                        if (providerName === 'VAPI') {
                             console.log(chalk.yellow(`    Name: ${num.name}`));
+                        } else if (providerName === '11Labs') {
+                            console.log(chalk.yellow(`    Label: ${num.label || 'N/A'}`));
                         }
                         
                         console.log(chalk.yellow(`    ID: ${num.id}`));
@@ -292,12 +388,37 @@ async function displayProviderConfig(providerName, providerConfig, remote) {
                                 }
                             }
                         } else if (providerName === 'Retell') {
-                            // Display all available properties in the Retell response
+                            // Show important properties first with better formatting
+                            if (num.phoneType && num.phoneType !== 'N/A') {
+                                console.log(chalk.yellow(`    Phone Type: ${num.phoneType}`));
+                            }
+                            
+                            if (num.lastModified) {
+                                console.log(chalk.yellow(`    Last Modified: ${num.lastModified}`));
+                            }
+                            
+                            if (num.inboundAgentId) {
+                                console.log(chalk.yellow(`    Inbound Agent ID: ${num.inboundAgentId}`));
+                            }
+                            
+                            if (num.outboundAgentId) {
+                                console.log(chalk.yellow(`    Outbound Agent ID: ${num.outboundAgentId}`));
+                            }
+                            
+                            if (num.areaCode) {
+                                console.log(chalk.yellow(`    Area Code: ${num.areaCode}`));
+                            }
+                            
+                            // Display any remaining properties in the Retell response
                             Object.entries(num).forEach(([key, value]) => {
-                                // Skip properties we already displayed, name, or null/undefined values
+                                // Skip properties we already displayed or null/undefined values
                                 if (key !== 'id' && 
                                     key !== 'number' && 
-                                    key !== 'name' && 
+                                    key !== 'phoneType' &&
+                                    key !== 'lastModified' &&
+                                    key !== 'inboundAgentId' &&
+                                    key !== 'outboundAgentId' &&
+                                    key !== 'areaCode' &&
                                     value != null) {
                                     
                                     // Display properties
@@ -313,27 +434,38 @@ async function displayProviderConfig(providerName, providerConfig, remote) {
                             if (num.error) {
                                 console.log(chalk.red(`    Error: ${num.error}`));
                             } else {
-                                // Display basic details for 11Labs
-                                if (num.model) {
-                                    console.log(chalk.yellow(`    Model: ${num.model}`));
+                                // Display status if available
+                                if (num.status && num.status !== 'N/A') {
+                                    console.log(chalk.yellow(`    Status: ${num.status}`));
                                 }
                                 
-                                if (num.voiceId) {
-                                    console.log(chalk.yellow(`    Voice ID: ${num.voiceId}`));
+                                // Display created_at if available
+                                if (num.created_at && num.created_at !== 'N/A') {
+                                    // Try to format the date if it's a timestamp
+                                    let formattedDate = num.created_at;
+                                    try {
+                                        if (typeof num.created_at === 'number' || !isNaN(new Date(num.created_at).getTime())) {
+                                            formattedDate = new Date(num.created_at).toLocaleString();
+                                        }
+                                    } catch (e) {
+                                        // Keep original format if conversion fails
+                                    }
+                                    console.log(chalk.yellow(`    Created: ${formattedDate}`));
                                 }
                                 
-                                if (num.createdAt) {
-                                    console.log(chalk.yellow(`    Created: ${num.createdAt}`));
+                                // Display termination_uri if available (but not if it's the same as sipUri)
+                                if (num.termination_uri && num.termination_uri !== 'N/A' && num.termination_uri !== sipUri) {
+                                    console.log(chalk.yellow(`    Termination URI: ${num.termination_uri}`));
                                 }
                                 
                                 // Display additional properties dynamically
                                 Object.entries(num).forEach(([key, value]) => {
                                     if (key !== 'id' && 
                                         key !== 'number' && 
-                                        key !== 'name' && 
-                                        key !== 'model' &&
-                                        key !== 'voiceId' &&
-                                        key !== 'createdAt' &&
+                                        key !== 'label' && 
+                                        key !== 'termination_uri' &&
+                                        key !== 'status' &&
+                                        key !== 'created_at' &&
                                         value != null) {
                                         
                                         if (typeof value === 'object') {
@@ -382,7 +514,8 @@ function displayPhoneNumbers(providerPhoneNumbers) {
                     } else if (providerName === 'Retell') {
                         sipUri = `sip:${number}@5t4n6j0wnrl.sip.livekit.cloud:5060;transport=tcp`;
                     } else if (providerName === '11Labs') {
-                        sipUri = `sip:${number}@sip.elevenlabs.io`;
+                        const formattedNumber = number.startsWith('+') ? number.substring(1) : number;
+                        sipUri = `sip:${formattedNumber}@sip.rtc.elevenlabs.io:5060;transport=tcp`;
                     }
                     console.log(chalk.yellow(`        - Number: ${number} (${sipUri})`));
                 });

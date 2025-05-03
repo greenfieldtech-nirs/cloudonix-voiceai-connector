@@ -134,11 +134,14 @@ class VapiApiService {
     }
   }
 
-  async addByoPhoneNumber(name, phoneNumber, credentialId) {
+  async addByoPhoneNumber(domainName, phoneNumber, credentialId) {
     try {
+      // Format the name in the same pattern as other providers
+      const formattedName = `[${domainName}] ${phoneNumber}`;
+      
       const response = await this.client.post('/phone-number', {
         provider: 'byo-phone-number',
-        name: `Cloudonix ${phoneNumber}`,
+        name: formattedName,
         number: phoneNumber,
         numberE164CheckEnabled: false,
         credentialId

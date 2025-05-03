@@ -33,8 +33,8 @@ function getConfig() {
             apiUrl: process.env.RETELL_API_URL || ''
         },
         elevenlabs: {
-            apiKey: process.env.ELEVENLABS_API_KEY || '',
-            apiUrl: process.env.ELEVENLABS_API_URL || ''
+            apiKey: process.env.ELEVENLABS_API_KEY || ''
+            // No apiUrl needed when using the official SDK
         }
     };
 
@@ -54,7 +54,8 @@ function getConfig() {
                 },
                 elevenlabs: {
                     ...defaultConfig.elevenlabs,
-                    ...(fileConfig.elevenlabs || {})
+                    apiKey: fileConfig.elevenlabs?.apiKey || defaultConfig.elevenlabs.apiKey
+                    // Only include apiKey, not apiUrl
                 }
             };
         }

@@ -107,23 +107,49 @@ This will:
 
 ### Configure a Voice AI Service Provider
 
-To create a connection to your Voice Agent service provider, use the following example:
+To configure a Voice AI service provider with just the API key:
+
+```bash
+cx-vcc service --provider vapi --apikey YOUR_VAPI_API_KEY
+```
+
+Or to also create a SIP trunk connection (requires a domain):
 
 ```bash
 cx-vcc service --provider vapi --apikey YOUR_VAPI_API_KEY --name "My SIP Trunk" --domain example.com
 ```
 
-This will:
-1. Configure the VAPI API key
-2. Create a SIP trunk connection between VAPI and Cloudonix
-3. Use the inbound SIP URI from the specified domain
-4. Store the trunk credential ID in the Cloudonix domain configuration
-5. Display the SIP trunk details
+For other providers:
 
-### Add a Phone Number to a VAPI Assistant
+```bash
+cx-vcc service --provider retell --apikey YOUR_RETELL_API_KEY
+cx-vcc service --provider 11labs --apikey YOUR_11LABS_API_KEY
+```
+
+This will:
+1. Configure the provider's API key in all cases
+2. If --name and --domain are provided, also:
+   - Create a SIP trunk connection between the provider and Cloudonix
+   - Use the inbound SIP URI from the specified domain
+   - Store the trunk credential ID in the Cloudonix domain configuration
+   - Display the SIP trunk details
+
+Currently supported providers:
+- VAPI
+- Retell
+- 11Labs (ElevenLabs)
+
+### Add a Phone Number to a Voice AI Provider
 
 ```bash
 cx-vcc addnumber --domain example.com --provider vapi --number +12025551234
+```
+
+For other providers:
+
+```bash
+cx-vcc addnumber --domain example.com --provider retell --number +12025551234
+cx-vcc addnumber --domain example.com --provider 11labs --number +12025551234
 ```
 
 This will:
@@ -200,18 +226,27 @@ domains:
       phoneNumbers:
         '+12127773456':
           id: 682ce050-................
-          sipUri: sip:+12127773456@api.vapi.ai
+          sipUri: sip:+12127773456@sip.vapi.ai
     retell:
       trunkCredentialId: Not required
       phoneNumbers:
         '+12127773456':
-          sipUri: sip:+12127773456@api.retellai.com
+          sipUri: sip:+12127773456@5t4n6j0wnrl.sip.livekit.cloud:5060;transport=tcp
+    elevenlabs:
+      trunkCredentialId: trunk-123456789
+      phoneNumbers:
+        '+12127773456':
+          id: phone-123456789
+          sipUri: sip:+12127773456@sip.elevenlabs.io
 vapi:
   apiKey: aeacb..................
   apiUrl: https://api.vapi.ai
 retell:
   apiKey: key_0..................
   apiUrl: https://api.retellai.com
+elevenlabs:
+  apiKey: xi-api-key..................
+  # No apiUrl needed when using the official SDK
 
 ```
 
