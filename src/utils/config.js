@@ -31,6 +31,10 @@ function getConfig() {
         retell: {
             apiKey: process.env.RETELL_API_KEY || '',
             apiUrl: process.env.RETELL_API_URL || ''
+        },
+        elevenlabs: {
+            apiKey: process.env.ELEVENLABS_API_KEY || ''
+            // No apiUrl needed when using the official SDK
         }
     };
 
@@ -47,6 +51,11 @@ function getConfig() {
                 retell: {
                     ...defaultConfig.retell,
                     ...(fileConfig.retell || {})
+                },
+                elevenlabs: {
+                    ...defaultConfig.elevenlabs,
+                    apiKey: fileConfig.elevenlabs?.apiKey || defaultConfig.elevenlabs.apiKey
+                    // Only include apiKey, not apiUrl
                 }
             };
         }

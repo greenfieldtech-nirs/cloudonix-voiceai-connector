@@ -10,6 +10,7 @@ const deleteCommand = require('./commands/delete');
 const serviceCommand = require('./commands/service');
 const addNumberCommand = require('./commands/addnumber');
 const displayCommand = require('./commands/display');
+const syncCommand = require('./commands/sync');
 
 // Import utilities
 const { setDebugMode } = require('./utils/debug');
@@ -45,10 +46,10 @@ program
 program
     .command('service')
     .description('Configure a Voice AI service provider')
-    .requiredOption('-p, --provider <provider>', 'Service provider name (currently supports: vapi)')
+    .requiredOption('-p, --provider <provider>', 'Service provider name (currently supports: vapi, retell, 11labs)')
     .requiredOption('-a, --apikey <apikey>', 'API key for the service provider')
-    .requiredOption('-n, --name <n>', 'Name for the SIP trunk (if creating a trunk)')
-    .requiredOption('-d, --domain <domain>', 'Cloudonix domain to use for SIP trunk')
+    .option('-n, --name <n>', 'Name for the SIP trunk (if creating a trunk)')
+    .option('-d, --domain <domain>', 'Cloudonix domain to use for SIP trunk (only required when creating a trunk)')
     .option('--debug', 'Enable debug mode for detailed logging')
     .action(serviceCommand);
 
@@ -57,8 +58,8 @@ program
     .command('addnumber')
     .description('Add a phone number to a Voice AI provider')
     .requiredOption('-d, --domain <domain>', 'Cloudonix domain to use')
-    .requiredOption('-p, --provider <provider>', 'Service provider name (currently supports: vapi)')
-    .requiredOption('-n, --number <number>', 'Phone number to add (E.164 format)')
+    .requiredOption('-p, --provider <provider>', 'Service provider name (currently supports: vapi, retell, 11labs)')
+    .requiredOption('-n, --number <number>', 'Phone number to add (E.164 format mandatory)')
     .option('--debug', 'Enable debug mode for detailed logging')
     .action(addNumberCommand);
 
@@ -67,8 +68,18 @@ program
     .command('display')
     .description('Display configuration information')
     .option('-d, --domain <domain>', 'Specific domain to display')
+    .option('-r, --remote', 'Display remote configuration from service providers')
     .option('--debug', 'Enable debug mode for detailed logging')
     .action(displayCommand);
+
+// Sync command
+program
+    .command('sync')
+    .description('Synchronize local configuration with remote service providers')
+    .option('-d, --domain <domain>', 'Limit sync to a specific Cloudonix domain')
+    .option('-p, --provider <provider>', 'Limit sync to a specific service provider (vapi, retell, 11labs)')
+    .option('--debug', 'Enable debug mode for detailed logging')
+    .action(syncCommand);
 
 program.parse(process.argv);
 

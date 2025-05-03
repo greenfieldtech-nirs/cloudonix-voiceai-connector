@@ -102,6 +102,15 @@ class RetellApiService {
     }
   }
 
+  async getPhoneNumbers() {
+    try {
+      const response = await this.client.get('/list-phone-numbers');
+      return response.data;
+    } catch (error) {
+      this._handleError(error, 'Failed to retrieve Retell phone numbers');
+    }
+  }
+
   async importPhoneNumber(phoneNumber, domainName) {
     try {
       const config = getConfig();

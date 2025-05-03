@@ -5,13 +5,39 @@ A command-line tool to establish SIP trunks between Cloudonix and Voice AI provi
 ## Installation
 
 ### Prerequisites
-- Node.js v14 or higher
-- npm v6 or higher
+- Node.js v22 or higher
+- npm v10 or higher
+
+#### Installing `node` and `npm` (optional)
+If you currently don't have `node` and `npm` installed on your local machine, here is a quick installation
+guide to get you started using the `nvm` tool.
+
+1. Installing `nvm`
+```bash
+curl -sL https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.0/install.sh -o install_nvm.sh
+chmod +x install_nvm.sh
+./install_nvm.sh
+```
+After the installation completes, open a new terminal window to continue the installation.
+
+2. Verify `nvm`
+```bash
+command -v nvm
+```
+The output should simply say `nvm`.
+
+3. Install `node` and `npm`
+```bash
+nvm install --lts
+```
+This will install the latest version of both `node` and `npm`.
+
+Now, you can continue with the next installation steps normally.
 
 ### Install from Source
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/greenfieldtech-nirs/cloudonix-voiceai-connector.git
 cd cloudonix-voiceai-connector
 
 # Install dependencies
@@ -23,7 +49,7 @@ npm link
 
 ### Install from npm
 ```bash
-npm install -f cloudonix-voiceai-connector
+npm install -g cx-vcc
 ```
 This will install the CLI tool globally on your system.
 
@@ -81,23 +107,49 @@ This will:
 
 ### Configure a Voice AI Service Provider
 
-To create a connection to your Voice Agent service provider, use the following example:
+To configure a Voice AI service provider with just the API key:
+
+```bash
+cx-vcc service --provider vapi --apikey YOUR_VAPI_API_KEY
+```
+
+Or to also create a SIP trunk connection (requires a domain):
 
 ```bash
 cx-vcc service --provider vapi --apikey YOUR_VAPI_API_KEY --name "My SIP Trunk" --domain example.com
 ```
 
-This will:
-1. Configure the VAPI API key
-2. Create a SIP trunk connection between VAPI and Cloudonix
-3. Use the inbound SIP URI from the specified domain
-4. Store the trunk credential ID in the Cloudonix domain configuration
-5. Display the SIP trunk details
+For other providers:
 
-### Add a Phone Number to a VAPI Assistant
+```bash
+cx-vcc service --provider retell --apikey YOUR_RETELL_API_KEY
+cx-vcc service --provider 11labs --apikey YOUR_11LABS_API_KEY
+```
+
+This will:
+1. Configure the provider's API key in all cases
+2. If --name and --domain are provided, also:
+   - Create a SIP trunk connection between the provider and Cloudonix
+   - Use the inbound SIP URI from the specified domain
+   - Store the trunk credential ID in the Cloudonix domain configuration
+   - Display the SIP trunk details
+
+Currently supported providers:
+- VAPI
+- Retell
+- 11Labs (ElevenLabs)
+
+### Add a Phone Number to a Voice AI Provider
 
 ```bash
 cx-vcc addnumber --domain example.com --provider vapi --number +12025551234
+```
+
+For other providers:
+
+```bash
+cx-vcc addnumber --domain example.com --provider retell --number +12025551234
+cx-vcc addnumber --domain example.com --provider 11labs --number +12025551234
 ```
 
 This will:
@@ -129,6 +181,12 @@ or
 cx-vcc display --domain example.com
 ```
 
+Display remote configuration from service providers:
+
+```bash
+cx-vcc display --remote
+```
+
 The displayed information includes:
 - Domain name
 - API keys (masked for security)
@@ -139,6 +197,40 @@ The displayed information includes:
   - SIP URI
 
 This command is useful for verifying your current setup and troubleshooting configuration issues.
+
+### Synchronize Local and Remote Configurations
+
+The `sync` command helps you identify and remove phone numbers that exist in your local configuration but no longer exist in the remote service provider:
+
+```bash
+cx-vcc sync
+```
+
+You can limit the sync to a specific domain:
+
+```bash
+cx-vcc sync --domain example.com
+```
+
+Or to a specific provider:
+
+```bash
+cx-vcc sync --provider vapi
+cx-vcc sync --provider retell
+cx-vcc sync --provider 11labs
+```
+
+Or both:
+
+```bash
+cx-vcc sync --domain example.com --provider vapi
+```
+
+This will:
+1. Fetch all phone numbers from the remote service provider
+2. Compare with phone numbers in your local configuration
+3. Remove phone numbers from local configuration that don't exist remotely
+4. Display a summary of changes made
 
 ### Debug Mode
 
@@ -174,18 +266,27 @@ domains:
       phoneNumbers:
         '+12127773456':
           id: 682ce050-................
-          sipUri: sip:+12127773456@api.vapi.ai
+          sipUri: sip:+12127773456@sip.vapi.ai
     retell:
       trunkCredentialId: Not required
       phoneNumbers:
         '+12127773456':
-          sipUri: sip:+12127773456@api.retellai.com
+          sipUri: sip:+12127773456@5t4n6j0wnrl.sip.livekit.cloud:5060;transport=tcp
+    elevenlabs:
+      trunkCredentialId: trunk-123456789
+      phoneNumbers:
+        '+12127773456':
+          id: phone-123456789
+          sipUri: sip:+12127773456@sip.elevenlabs.io
 vapi:
   apiKey: aeacb..................
   apiUrl: https://api.vapi.ai
 retell:
   apiKey: key_0..................
   apiUrl: https://api.retellai.com
+elevenlabs:
+  apiKey: xi-api-key..................
+  # No apiUrl needed when using the official SDK
 
 ```
 
@@ -195,7 +296,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/yourusername/cloudonix-voiceai-connector/tags).
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/greenfieldtech-nirs/cloudonix-voiceai-connector/tags).
 
 ## License
 

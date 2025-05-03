@@ -101,6 +101,7 @@ Thumbs.db
 # Project specific
 config.yaml
 .cx-vcc/
+.secrets/
 
 # Temporary files
 *.tmp
