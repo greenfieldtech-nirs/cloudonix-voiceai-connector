@@ -40,13 +40,8 @@ program
       setDebugMode(options.debug || false);
     });
 
-// Add a special command for fancy version display
-program
-    .command('banner')
-    .description('Display ASCII art banner')
-    .action(() => {
-        console.log(chalk.cyan(banner));
-    });
+// Display the banner on each execution
+console.log(chalk.cyan(banner));
 
 // Configure command
 program
@@ -106,8 +101,7 @@ program
 
 program.parse(process.argv);
 
-// Display banner and help if no arguments provided
+// Display help if no arguments provided
 if (!process.argv.slice(2).length) {
-  console.log(chalk.cyan(banner));
   program.help();
 }
