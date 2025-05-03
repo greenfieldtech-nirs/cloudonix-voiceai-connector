@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.7] - 2025-05-05
 
 ### Added
 - Added support for 11Labs as a new voice agent provider
@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for displaying remote 11Labs phone numbers with the display --remote command
 - Added new `sync` command to synchronize local configuration with remote service providers
 - Added optional domain and provider filtering to the sync command
-- Fixed sync command to correctly handle phone numbers stored under both 'elevenlabs' and '11labs' keys
 
 ### Changed
 - Made domain parameter optional for service command
@@ -35,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced debugging for 11Labs API calls with detailed request/response logging
 - Improved 11Labs API response handling with multiple fallback mechanisms and more detailed debug output
 - Fixed 11Labs API URL display in the configuration output
+- Fixed sync command to correctly handle phone numbers stored under both 'elevenlabs' and '11labs' keys
+
+## [Unreleased]
 
 ## [0.1.6] - 2025-05-02
 
