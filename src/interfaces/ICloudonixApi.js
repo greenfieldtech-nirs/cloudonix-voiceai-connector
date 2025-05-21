@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * Interface for Cloudonix API Services
  * This interface defines the standard methods that all Cloudonix API implementations must support
@@ -10,7 +11,7 @@ class ICloudonixApi {
    */
   constructor(apiKey, baseUrl) {
     if (this.constructor === ICloudonixApi) {
-      throw new Error("Cannot instantiate interface directly");
+      throw new Error('Cannot instantiate interface directly');
     }
   }
 
@@ -20,7 +21,7 @@ class ICloudonixApi {
    * @throws {Error} If the API key is invalid or verification fails
    */
   async verifyApiKey() {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -30,7 +31,7 @@ class ICloudonixApi {
    * @throws {Error} If fetching domain details fails
    */
   async getDomainDetails(domainName) {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -41,7 +42,7 @@ class ICloudonixApi {
    * @throws {Error} If creating the SIP trunk fails
    */
   async createSipTrunk(domainName, trunkData) {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -51,7 +52,7 @@ class ICloudonixApi {
    * @throws {Error} If fetching tenant details fails
    */
   async getTenantDetails(tenantId) {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -62,7 +63,7 @@ class ICloudonixApi {
    * @throws {Error} If creating or updating the domain fails
    */
   async createOrUpdateDomain(domainName, domainData) {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -72,7 +73,7 @@ class ICloudonixApi {
    * @throws {Error} If deleting the domain fails
    */
   async deleteDomain(domainName) {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -83,7 +84,7 @@ class ICloudonixApi {
    * @throws {Error} If configuring the default application fails
    */
   async setDomainDefaultApplication(domainName, applicationId) {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 }
 

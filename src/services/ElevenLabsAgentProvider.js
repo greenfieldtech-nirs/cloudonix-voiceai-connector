@@ -1,5 +1,5 @@
 const { ElevenLabsClient } = require('elevenlabs');
-const { logApiError, debugLog } = require('../utils/debug');
+const { logApiError } = require('../utils/debug');
 const { getConfig, saveConfig } = require('../utils/config');
 const IVoiceAgentProvider = require('../interfaces/IVoiceAgentProvider');
 
@@ -18,11 +18,11 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
     this.apiKey = apiKey;
     // Make sure baseUrl doesn't end with a slash to avoid path issues
     this.baseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    
+
     // Create a client using the elevenlabs package
     // The official SDK handles the base URL automatically
     this.client = new ElevenLabsClient({
-      apiKey: this.apiKey
+      apiKey: this.apiKey,
     });
 
     this._updateConfig();
@@ -37,7 +37,7 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
     config.elevenlabs = {
       ...config.elevenlabs,
       apiKey: this.apiKey,
-      apiUrl: this.baseUrl
+      apiUrl: this.baseUrl,
     };
     saveConfig(config);
   }
@@ -65,7 +65,7 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
       console.log('===========================\n');
     }
   }
-  
+
   /**
    * Set up axios debug interceptors when --debug flag is used
    * @private
@@ -74,7 +74,7 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
   _setupAxiosDebug(axios) {
     if (process.argv.includes('--debug')) {
       // Add request interceptor for debug logging
-      axios.interceptors.request.use(request => {
+      axios.interceptors.request.use((request) => {
         console.log('\n=== 11Labs Axios Request ===');
         console.log('URL:', request.method.toUpperCase(), request.url);
         console.log('Headers:', JSON.stringify(request.headers, null, 2));
@@ -87,21 +87,25 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
 
       // Add response interceptor for debug logging
       axios.interceptors.response.use(
-        response => {
+        (response) => {
           console.log('\n=== 11Labs Axios Response ===');
           console.log('Status:', response.status, response.statusText);
           console.log('Headers:', JSON.stringify(response.headers, null, 2));
-          
+
           // More detailed analysis of the response data
           if (response.data) {
             console.log('Data:', JSON.stringify(response.data, null, 2));
             console.log('Data Type:', typeof response.data);
-            
+
             // If it's an object, list all top-level keys
-            if (typeof response.data === 'object' && response.data !== null && !Array.isArray(response.data)) {
+            if (
+              typeof response.data === 'object' &&
+              response.data !== null &&
+              !Array.isArray(response.data)
+            ) {
               console.log('Available Keys:', Object.keys(response.data));
             }
-            
+
             // If it's an array, show the length and sample of first item
             if (Array.isArray(response.data)) {
               console.log('Array Length:', response.data.length);
@@ -114,8 +118,8 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
           }
           console.log('=============================\n');
           return response;
-        }, 
-        error => {
+        },
+        (error) => {
           console.log('\n=== 11Labs Axios Error ===');
           console.log('Message:', error.message);
           if (error.response) {
@@ -163,38 +167,38 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
     try {
       const axios = require('axios');
       const baseUrl = this.baseUrl || 'https://api.elevenlabs.io/v1';
-      
+
       this._logDebug('Get Phone Numbers Request', {
         endpoint: '/v1/convai/phone-numbers/',
         method: 'GET',
         headers: {
-          'Xi-Api-Key': '********' // Masking API key for security
-        }
+          'Xi-Api-Key': '********', // Masking API key for security
+        },
       });
-      
+
       // Set up axios debug interceptors
       this._setupAxiosDebug(axios);
-      
+
       // Use direct axios call with Xi-Api-Key header
       const response = await axios.get(`${baseUrl}/v1/convai/phone-numbers/`, {
         headers: {
           'Xi-Api-Key': this.apiKey,
-          'Accept': 'application/json'
-        }
+          Accept: 'application/json',
+        },
       });
-      
+
       // Log the raw response first for debugging
       this._logDebug('Get Phone Numbers Raw Response', {
         status: response.status,
         statusText: response.statusText,
-        data: response.data
+        data: response.data,
       });
-      
+
       // Check if response.data is an array directly (some APIs return array at top level)
       let phoneNumbers = [];
       if (Array.isArray(response.data)) {
         phoneNumbers = response.data;
-      } 
+      }
       // If it's an object with a phone_numbers property
       else if (response.data.phone_numbers && Array.isArray(response.data.phone_numbers)) {
         phoneNumbers = response.data.phone_numbers;
@@ -211,102 +215,111 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
       else if (response.data.items && Array.isArray(response.data.items)) {
         phoneNumbers = response.data.items;
       }
-      
+
       this._logDebug('Get Phone Numbers Processed Response', {
         phoneNumbersCount: phoneNumbers.length,
-        data: phoneNumbers
+        data: phoneNumbers,
       });
-      
+
       // If API returns data, return it
       if (phoneNumbers.length > 0) {
         return phoneNumbers;
       }
-      
+
       // If no phone numbers from API, try to get them from the local config
       this._logDebug('No phone numbers from API, checking local config');
       const { getConfig } = require('../utils/config');
       const config = getConfig();
-      
+
       // Log the relevant parts of config for debugging
       if (process.argv.includes('--debug')) {
         console.log('\n=== Local Configuration Check ===');
         console.log('Has elevenlabs config:', !!config.elevenlabs);
         if (config.elevenlabs) {
           console.log('Has phoneNumbers:', !!config.elevenlabs.phoneNumbers);
-          console.log('Phone Numbers Keys:', config.elevenlabs.phoneNumbers ? Object.keys(config.elevenlabs.phoneNumbers) : 'None');
+          console.log(
+            'Phone Numbers Keys:',
+            config.elevenlabs.phoneNumbers ? Object.keys(config.elevenlabs.phoneNumbers) : 'None'
+          );
         }
         console.log('================================\n');
       }
-      
+
       // Convert local config phone numbers to a format similar to the API response
       if (config.elevenlabs && config.elevenlabs.phoneNumbers) {
         const phoneNumbersKeys = Object.keys(config.elevenlabs.phoneNumbers);
-        
+
         if (phoneNumbersKeys.length > 0) {
-          const localNumbers = Object.entries(config.elevenlabs.phoneNumbers).map(([number, details]) => ({
-            phone_number: number,
-            phone_number_id: details.id,
-            label: `[Local Config] ${number}`,
-            termination_uri: details.sipUri || null,
-            status: 'active', // Assume active since it's in the config
-            created_at: new Date().toISOString(), // Just use current date as we don't have this info
-            source: 'local_config'
-          }));
-          
+          const localNumbers = Object.entries(config.elevenlabs.phoneNumbers).map(
+            ([number, details]) => ({
+              phone_number: number,
+              phone_number_id: details.id,
+              label: `[Local Config] ${number}`,
+              termination_uri: details.sipUri || null,
+              status: 'active', // Assume active since it's in the config
+              created_at: new Date().toISOString(), // Just use current date as we don't have this info
+              source: 'local_config',
+            })
+          );
+
           this._logDebug('Phone Numbers from Local Config', {
             count: localNumbers.length,
-            data: localNumbers
+            data: localNumbers,
           });
-          
+
           return localNumbers;
         }
-        
+
         this._logDebug('No phone numbers in local config');
       } else {
         this._logDebug('No elevenlabs config or missing phoneNumbers section');
       }
-      
+
       // If no data from API or local config, return empty array
       return [];
     } catch (error) {
       // Log error details for debugging
       this._logDebug('Get Phone Numbers Error', {
         message: error.message,
-        response: error.response ? {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data
-        } : 'No response'
+        response: error.response
+          ? {
+              status: error.response.status,
+              statusText: error.response.statusText,
+              data: error.response.data,
+            }
+          : 'No response',
       });
-      
+
       // Final fallback - return local numbers if we have them
       try {
         const { getConfig } = require('../utils/config');
         const config = getConfig();
-        
+
         if (config.elevenlabs && config.elevenlabs.phoneNumbers) {
-          const localNumbers = Object.entries(config.elevenlabs.phoneNumbers).map(([number, details]) => ({
-            phone_number: number,
-            phone_number_id: details.id,
-            label: `[Local Config] ${number}`,
-            termination_uri: details.sipUri || null,
-            source: 'local_config_fallback'
-          }));
-          
+          const localNumbers = Object.entries(config.elevenlabs.phoneNumbers).map(
+            ([number, details]) => ({
+              phone_number: number,
+              phone_number_id: details.id,
+              label: `[Local Config] ${number}`,
+              termination_uri: details.sipUri || null,
+              source: 'local_config_fallback',
+            })
+          );
+
           this._logDebug('Fallback: Phone Numbers from Local Config', {
-            data: localNumbers
+            data: localNumbers,
           });
-          
+
           if (localNumbers.length > 0) {
             return localNumbers;
           }
         }
       } catch (configError) {
         this._logDebug('Failed to get local config', {
-          error: configError.message
+          error: configError.message,
         });
       }
-      
+
       // If all else fails, return empty array rather than throwing an error
       return [];
     }
@@ -322,85 +335,88 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
     try {
       const axios = require('axios');
       const baseUrl = this.baseUrl || 'https://api.elevenlabs.io/v1';
-      
+
       this._logDebug('Get Phone Number Details Request', {
         endpoint: `/v1/convai/phone-numbers/${id}`,
         method: 'GET',
         headers: {
-          'Xi-Api-Key': '********' // Masking API key for security
-        }
+          'Xi-Api-Key': '********', // Masking API key for security
+        },
       });
-      
+
       // Set up axios debug interceptors
       this._setupAxiosDebug(axios);
-      
+
       // Use direct axios call with Xi-Api-Key header
       const response = await axios.get(`${baseUrl}/v1/convai/phone-numbers/${id}`, {
         headers: {
           'Xi-Api-Key': this.apiKey,
-          'Accept': 'application/json'
-        }
+          Accept: 'application/json',
+        },
       });
-      
+
       const result = response.data;
-      
+
       this._logDebug('Get Phone Number Details Response', {
         status: response.status,
         statusText: response.statusText,
-        data: result
+        data: result,
       });
-      
+
       return result;
     } catch (error) {
       // Log error details for debugging
       this._logDebug('Get Phone Number Details Error', {
         id,
         message: error.message,
-        response: error.response ? {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data
-        } : 'No response'
+        response: error.response
+          ? {
+              status: error.response.status,
+              statusText: error.response.statusText,
+              data: error.response.data,
+            }
+          : 'No response',
       });
-      
+
       // Handle case where the endpoint returns 404
       if (error.response?.status === 404) {
         // Try to get details from local config
         try {
           const { getConfig } = require('../utils/config');
           const config = getConfig();
-          
+
           if (config.elevenlabs && config.elevenlabs.phoneNumbers) {
             // Find the phone number in the local config that matches this ID
-            const localNumber = Object.entries(config.elevenlabs.phoneNumbers)
-              .find(([_, details]) => details.id === id);
-            
+            const localNumber = Object.entries(config.elevenlabs.phoneNumbers).find(
+              ([_, details]) => details.id === id
+            );
+
             if (localNumber) {
               const [number, details] = localNumber;
               this._logDebug('Phone Number Details from Local Config', {
                 number,
-                details
+                details,
               });
-              
+
               return {
                 phone_number_id: id,
                 phone_number: number,
                 label: `[Local Config] ${number}`,
                 termination_uri: details.sipUri || null,
-                source: 'local_config'
+                source: 'local_config',
               };
             }
           }
         } catch (configError) {
           this._logDebug('Failed to get local config', {
-            error: configError.message
+            error: configError.message,
           });
         }
-        
+
         // If we can't find it in local config, return basic info
         return { id, phone_number: id };
       }
-      
+
       // For other errors, use the standard error handler
       this._handleError(error, `Failed to retrieve 11Labs phone number details for ID: ${id}`);
     }
@@ -439,84 +455,95 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
       if (!phoneNumber.startsWith('+')) {
         phoneNumber = `+${phoneNumber}`;
       }
-      
+
       // For ElevenLabs, we need to use their API to register the phone number
       // Using the ConvAI phone numbers API endpoint for SIP trunk phone numbers
       // /v1/convai/phone-numbers/create
-      
+
       // Get the domain configuration to access inboundSipUri
       const { getConfig } = require('../utils/config');
       const config = getConfig();
-      
+
       // Try to find the domain config if domainOrCredentialId is a domain name
       let terminationUri;
-      if (typeof domainOrCredentialId === 'string' && config.domains && config.domains[domainOrCredentialId]) {
+      if (
+        typeof domainOrCredentialId === 'string' &&
+        config.domains &&
+        config.domains[domainOrCredentialId]
+      ) {
         const domainConfig = config.domains[domainOrCredentialId];
         if (!domainConfig.inboundSipUri) {
-          throw new Error(`Domain ${domainOrCredentialId} does not have an inbound SIP URI configured`);
+          throw new Error(
+            `Domain ${domainOrCredentialId} does not have an inbound SIP URI configured`
+          );
         }
         terminationUri = `sip:${domainConfig.inboundSipUri}:5060`;
       } else {
         // Use the provided credential ID directly if not a domain or domain not found
         terminationUri = `sip:${domainOrCredentialId}:5060`;
       }
-      
+
       // Format the label to include both domain name and phone number
       let formattedLabel = name;
-      
+
       // If we have a domain name in domainOrCredentialId, include it in the label
-      if (typeof domainOrCredentialId === 'string' && config.domains && config.domains[domainOrCredentialId]) {
+      if (
+        typeof domainOrCredentialId === 'string' &&
+        config.domains &&
+        config.domains[domainOrCredentialId]
+      ) {
         formattedLabel = `[${domainOrCredentialId}] ${phoneNumber}`;
       } else {
         // If no domain, use a generic format with just the phone number
         formattedLabel = `[Cloudonix] ${phoneNumber}`;
       }
-      
+
       // Create the request payload with the correct termination URI and formatted label
       const requestPayload = {
         phone_number: phoneNumber,
         label: formattedLabel,
         termination_uri: terminationUri,
-        provider: "sip_trunk"
+        provider: 'sip_trunk',
       };
-      
+
       // Log the request
       this._logDebug('Add Phone Number Request', {
         endpoint: '/v1/convai/phone-numbers/create',
         method: 'POST',
         headers: {
-          'Xi-Api-Key': '********' // Masking API key for security
+          'Xi-Api-Key': '********', // Masking API key for security
         },
-        payload: requestPayload
+        payload: requestPayload,
       });
-      
+
       // Use direct axios call with Xi-Api-Key header
       const axios = require('axios');
       const baseUrl = this.baseUrl || 'https://api.elevenlabs.io/v1';
-      
+
       // Set up axios debug interceptors
       this._setupAxiosDebug(axios);
-      
-      const response = await axios.post(`${baseUrl}/v1/convai/phone-numbers/create`, 
+
+      const response = await axios.post(
+        `${baseUrl}/v1/convai/phone-numbers/create`,
         requestPayload,
         {
           headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Xi-Api-Key': this.apiKey
-          }
+            Accept: 'application/json',
+            'Xi-Api-Key': this.apiKey,
+          },
         }
       );
-      
+
       const result = response.data;
-      
+
       // Log the response
       this._logDebug('Add Phone Number Response', {
         status: response.status,
         statusText: response.statusText,
-        data: result
+        data: result,
       });
-      
+
       // Return a standardized response that matches our interface with the correct properties
       // The 11Labs API response structure for phone number creation includes:
       // - phone_number_id: the unique identifier for the phone number
@@ -528,7 +555,7 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
       return {
         // Standard internal properties
         id: result.phone_number_id || `phone-${Date.now()}`,
-        
+
         // Exact properties from 11Labs API
         phone_number_id: result.phone_number_id,
         phone_number: result.phone_number || phoneNumber,
@@ -536,36 +563,45 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
         termination_uri: result.termination_uri,
         status: result.status,
         created_at: result.created_at,
-        
+
         // Additional mapped properties for compatibility
         name: result.label || formattedLabel,
         phoneNumber: result.phone_number || phoneNumber,
         credentialId: domainOrCredentialId,
-        
+
         // Include any additional fields from the ElevenLabs response
-        ...result
+        ...result,
       };
     } catch (error) {
       // Log the error details for debugging
       this._logDebug('Add Phone Number Error', {
         message: error.message,
-        response: error.response ? {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data
-        } : 'No response'
+        response: error.response
+          ? {
+              status: error.response.status,
+              statusText: error.response.statusText,
+              data: error.response.data,
+            }
+          : 'No response',
       });
-      
+
       // Special handling for common errors
       if (error.response?.status === 400) {
-        const errorMessage = error.response.data?.detail || error.response.data?.message || 'Invalid request parameters';
+        const errorMessage =
+          error.response.data?.detail ||
+          error.response.data?.message ||
+          'Invalid request parameters';
         throw new Error(`Failed to add phone number to 11Labs: ${errorMessage}`);
       } else if (error.response?.status === 401) {
-        throw new Error(`Failed to add phone number to 11Labs: Authentication failed. Check your API key.`);
+        throw new Error(
+          `Failed to add phone number to 11Labs: Authentication failed. Check your API key.`
+        );
       } else if (error.response?.status === 429) {
-        throw new Error(`Failed to add phone number to 11Labs: Rate limit exceeded. Please try again later.`);
+        throw new Error(
+          `Failed to add phone number to 11Labs: Rate limit exceeded. Please try again later.`
+        );
       }
-      
+
       // For other errors, use the standard error handler
       this._handleError(error, 'Failed to add phone number to 11Labs');
     }
@@ -587,7 +623,7 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
     } else if (error.response) {
       // Axios error format (fallback)
       const { status, data } = error.response;
-      
+
       // Get a descriptive error message from the response data
       let detailMessage = '';
       if (data?.error) {
@@ -601,7 +637,7 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
       } else {
         detailMessage = `Status ${status}`;
       }
-      
+
       errorMessage += `: ${detailMessage}`;
     } else {
       // Generic error
@@ -612,7 +648,7 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
     if (process.argv.includes('--debug')) {
       console.error('\n=== 11Labs API Error ===');
       console.error(errorMessage);
-      
+
       // Log more structured error information
       console.error('Error details:');
       if (error.response) {

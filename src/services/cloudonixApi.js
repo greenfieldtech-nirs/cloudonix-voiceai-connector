@@ -9,33 +9,33 @@ class CloudonixApiService {
     this.client = axios.create({
       baseURL: this.baseUrl,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
     });
 
     // Add request interceptor for debugging
     this.client.interceptors.request.use(
-        (config) => {
-          logApiRequest(config.method.toUpperCase(), `${config.baseURL}${config.url}`, config.data);
-          return config;
-        },
-        (error) => {
-          logApiError(error, 'cloudonixApi.js', new Error().stack.split('\n')[1].match(/:(\d+):/)[1]);
-          return Promise.reject(error);
-        }
+      (config) => {
+        logApiRequest(config.method.toUpperCase(), `${config.baseURL}${config.url}`, config.data);
+        return config;
+      },
+      (error) => {
+        logApiError(error, 'cloudonixApi.js', new Error().stack.split('\n')[1].match(/:(\d+):/)[1]);
+        return Promise.reject(error);
+      }
     );
 
     // Add response interceptor for debugging
     this.client.interceptors.response.use(
-        (response) => {
-          logApiResponse(response);
-          return response;
-        },
-        (error) => {
-          logApiError(error, 'cloudonixApi.js', new Error().stack.split('\n')[1].match(/:(\d+):/)[1]);
-          return Promise.reject(error);
-        }
+      (response) => {
+        logApiResponse(response);
+        return response;
+      },
+      (error) => {
+        logApiError(error, 'cloudonixApi.js', new Error().stack.split('\n')[1].match(/:(\d+):/)[1]);
+        return Promise.reject(error);
+      }
     );
   }
 

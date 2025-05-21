@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { logApiRequest, logApiResponse, logApiError, debugLog } = require('../utils/debug');
+const { debugLog } = require('../utils/debug');
 const { getConfig, saveConfig } = require('../utils/config');
 
 class RetellApiService {
@@ -10,9 +10,9 @@ class RetellApiService {
     this.client = axios.create({
       baseURL: this.baseUrl,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
     });
 
     this._setupInterceptors();
@@ -77,7 +77,7 @@ class RetellApiService {
     config.retell = {
       ...config.retell,
       apiKey: this.apiKey,
-      apiUrl: this.baseUrl
+      apiUrl: this.baseUrl,
     };
     saveConfig(config);
   }
@@ -122,10 +122,15 @@ class RetellApiService {
 
       const response = await this.client.post('/import-phone-number', {
         phone_number: phoneNumber,
-        termination_uri: domainConfig.inboundSipUri
+        termination_uri: domainConfig.inboundSipUri,
       });
 
-      this._updatePhoneNumberConfig(config, phoneNumber, domainName, response.data.last_modification_timestamp);
+      this._updatePhoneNumberConfig(
+        config,
+        phoneNumber,
+        domainName,
+        response.data.last_modification_timestamp
+      );
 
       return response.data;
     } catch (error) {
@@ -152,9 +157,8 @@ class RetellApiService {
 
     if (error.response) {
       const { status, data } = error.response;
-      errorMessage += data?.error || data?.message 
-        ? `: ${data.error || data.message}`
-        : `: Status ${status}`;
+      errorMessage +=
+        data?.error || data?.message ? `: ${data.error || data.message}` : `: Status ${status}`;
     } else if (error.request) {
       errorMessage += ': No response received from server';
     } else {

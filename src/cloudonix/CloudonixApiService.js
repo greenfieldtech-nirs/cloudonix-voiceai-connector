@@ -20,9 +20,9 @@ class CloudonixApiService extends ICloudonixApi {
     this.client = axios.create({
       baseURL: this.baseUrl,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
     });
 
     // Add request interceptor for debugging
@@ -133,7 +133,10 @@ class CloudonixApiService extends ICloudonixApi {
    */
   async createSipTrunk(domainName, trunkData) {
     try {
-      const response = await this.client.post(`/customers/self/domains/${domainName}/trunks`, trunkData);
+      const response = await this.client.post(
+        `/customers/self/domains/${domainName}/trunks`,
+        trunkData
+      );
       return response.data;
     } catch (error) {
       this._handleError(error, `Failed to create SIP trunk for domain ${domainName}`);
@@ -195,9 +198,12 @@ class CloudonixApiService extends ICloudonixApi {
    */
   async setDomainDefaultApplication(domainName, applicationId) {
     try {
-      const response = await this.client.put(`/customers/self/domains/${domainName}/defaultApplication`, {
-        applicationId
-      });
+      const response = await this.client.put(
+        `/customers/self/domains/${domainName}/defaultApplication`,
+        {
+          applicationId,
+        }
+      );
       return response.data;
     } catch (error) {
       this._handleError(error, `Failed to set default application for domain ${domainName}`);

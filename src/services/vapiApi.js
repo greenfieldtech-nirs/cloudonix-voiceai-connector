@@ -9,9 +9,9 @@ class VapiApiService {
     this.client = axios.create({
       baseURL: this.baseUrl,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
     });
 
     this._setupInterceptors();
@@ -102,7 +102,7 @@ class VapiApiService {
       this._handleError(error, 'Failed to retrieve VAPI phone numbers');
     }
   }
-  
+
   async getPhoneNumberDetails(id) {
     try {
       const response = await this.client.get(`/phone-number/${id}`);
@@ -111,7 +111,7 @@ class VapiApiService {
       this._handleError(error, `Failed to retrieve VAPI phone number details for ID: ${id}`);
     }
   }
-  
+
   async getCredentialDetails(id) {
     try {
       const response = await this.client.get(`/credential/${id}`);
@@ -126,7 +126,7 @@ class VapiApiService {
       const response = await this.client.post('/credential', {
         provider: 'byo-sip-trunk',
         name,
-        gateways: [{ ip: inboundSipUri }]
+        gateways: [{ ip: inboundSipUri }],
       });
       return response.data;
     } catch (error) {
@@ -138,13 +138,13 @@ class VapiApiService {
     try {
       // Format the name in the same pattern as other providers
       const formattedName = `[${domainName}] ${phoneNumber}`;
-      
+
       const response = await this.client.post('/phone-number', {
         provider: 'byo-phone-number',
         name: formattedName,
         number: phoneNumber,
         numberE164CheckEnabled: false,
-        credentialId
+        credentialId,
       });
       return response.data;
     } catch (error) {
@@ -157,9 +157,8 @@ class VapiApiService {
 
     if (error.response) {
       const { status, data } = error.response;
-      errorMessage += data?.error || data?.message
-        ? `: ${data.error || data.message}`
-        : `: Status ${status}`;
+      errorMessage +=
+        data?.error || data?.message ? `: ${data.error || data.message}` : `: Status ${status}`;
     } else if (error.request) {
       errorMessage += ': No response received from server';
     } else {

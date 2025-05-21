@@ -22,7 +22,7 @@ class CloudonixApiFactory {
     return {
       name: 'Cloudonix API',
       defaultUrl: 'https://api.cloudonix.io',
-      documentation: 'https://docs.cloudonix.io'
+      documentation: 'https://docs.cloudonix.io',
     };
   }
 }

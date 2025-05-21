@@ -20,9 +20,9 @@ class VapiAgentProvider extends IVoiceAgentProvider {
     this.client = axios.create({
       baseURL: this.baseUrl,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
     });
 
     this._setupInterceptors();
@@ -174,7 +174,7 @@ class VapiAgentProvider extends IVoiceAgentProvider {
       const response = await this.client.post('/credential', {
         provider: 'byo-sip-trunk',
         name,
-        gateways: [{ ip: inboundSipUri }]
+        gateways: [{ ip: inboundSipUri }],
       });
       return response.data;
     } catch (error) {
@@ -197,7 +197,7 @@ class VapiAgentProvider extends IVoiceAgentProvider {
         name: `Cloudonix ${phoneNumber}`,
         number: phoneNumber,
         numberE164CheckEnabled: false,
-        credentialId
+        credentialId,
       });
       return response.data;
     } catch (error) {
@@ -217,9 +217,8 @@ class VapiAgentProvider extends IVoiceAgentProvider {
 
     if (error.response) {
       const { status, data } = error.response;
-      errorMessage += data?.error || data?.message
-        ? `: ${data.error || data.message}`
-        : `: Status ${status}`;
+      errorMessage +=
+        data?.error || data?.message ? `: ${data.error || data.message}` : `: Status ${status}`;
     } else if (error.request) {
       errorMessage += ': No response received from server';
     } else {

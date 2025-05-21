@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * Interface for Voice Agent Providers
  * This interface defines the standard methods that all voice agent provider implementations must support
@@ -10,7 +11,7 @@ class IVoiceAgentProvider {
    */
   constructor(apiKey, baseUrl) {
     if (this.constructor === IVoiceAgentProvider) {
-      throw new Error("Cannot instantiate interface directly");
+      throw new Error('Cannot instantiate interface directly');
     }
   }
 
@@ -20,7 +21,7 @@ class IVoiceAgentProvider {
    * @throws {Error} If the API key is invalid or verification fails
    */
   async verifyApiKey() {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -29,7 +30,7 @@ class IVoiceAgentProvider {
    * @throws {Error} If fetching phone numbers fails
    */
   async getPhoneNumbers() {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -39,7 +40,7 @@ class IVoiceAgentProvider {
    * @throws {Error} If fetching phone number details fails
    */
   async getPhoneNumberDetails(id) {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -50,7 +51,7 @@ class IVoiceAgentProvider {
    * @throws {Error} If creating the SIP trunk fails
    */
   async createSipTrunkConnection(name, inboundSipUri) {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -62,7 +63,7 @@ class IVoiceAgentProvider {
    * @throws {Error} If adding the phone number fails
    */
   async addPhoneNumber(name, phoneNumber, credentialId) {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 }
 

@@ -21,7 +21,7 @@ class RetellAgentProvider extends IVoiceAgentProvider {
     // Create Retell SDK client
     this.client = new Retell({
       apiKey: this.apiKey,
-      basePath: this.baseUrl
+      basePath: this.baseUrl,
     });
 
     this._updateConfig();
@@ -36,7 +36,7 @@ class RetellAgentProvider extends IVoiceAgentProvider {
     config.retell = {
       ...config.retell,
       apiKey: this.apiKey,
-      apiUrl: this.baseUrl
+      apiUrl: this.baseUrl,
     };
     saveConfig(config);
   }
@@ -80,7 +80,9 @@ class RetellAgentProvider extends IVoiceAgentProvider {
         throw new Error('Invalid Retell API key: Authentication failed');
       }
       if (error.status !== 403 && error.status !== 401) {
-        debugLog('Warning: Retell API returned a non-authorization error, assuming API key is valid');
+        debugLog(
+          'Warning: Retell API returned a non-authorization error, assuming API key is valid'
+        );
         return true;
       }
       this._handleError(error, 'Failed to verify Retell API key');
@@ -113,12 +115,15 @@ class RetellAgentProvider extends IVoiceAgentProvider {
       // Ensure the phone number has the '+' prefix
       const formattedNumber = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
       const response = await this.client.phoneNumbers.getPhoneNumber({
-        phoneNumber: formattedNumber
+        phoneNumber: formattedNumber,
       });
       this._logDebug('Phone Number Details', response);
       return response;
     } catch (error) {
-      this._handleError(error, `Failed to retrieve Retell phone number details for: ${phoneNumber}`);
+      this._handleError(
+        error,
+        `Failed to retrieve Retell phone number details for: ${phoneNumber}`
+      );
     }
   }
 
@@ -129,8 +134,10 @@ class RetellAgentProvider extends IVoiceAgentProvider {
    * @returns {Promise<Object>} The result (note: Retell doesn't directly support SIP trunk creation)
    * @throws {Error} With information that this operation is not supported
    */
-  async createSipTrunkConnection(name, inboundSipUri) {
-    throw new Error('Retell does not support direct SIP trunk creation. Use importPhoneNumber instead.');
+  async createSipTrunkConnection(_name, _inboundSipUri) {
+    throw new Error(
+      'Retell does not support direct SIP trunk creation. Use importPhoneNumber instead.'
+    );
   }
 
   /**
@@ -163,12 +170,17 @@ class RetellAgentProvider extends IVoiceAgentProvider {
 
       const response = await this.client.phoneNumbers.importPhoneNumber({
         phoneNumber,
-        terminationUri: domainConfig.inboundSipUri
+        terminationUri: domainConfig.inboundSipUri,
       });
 
-      this._updatePhoneNumberConfig(config, phoneNumber, domainName, response.lastModificationTimestamp);
+      this._updatePhoneNumberConfig(
+        config,
+        phoneNumber,
+        domainName,
+        response.lastModificationTimestamp
+      );
       this._logDebug('Import Phone Number Response', response);
-      
+
       return response;
     } catch (error) {
       this._handleError(error, 'Failed to import phone number to Retell');
@@ -219,15 +231,13 @@ class RetellAgentProvider extends IVoiceAgentProvider {
     if (error.status) {
       // SDK error format
       const data = error.body || {};
-      errorMessage += data.error || data.message 
-        ? `: ${data.error || data.message}`
-        : `: Status ${error.status}`;
+      errorMessage +=
+        data.error || data.message ? `: ${data.error || data.message}` : `: Status ${error.status}`;
     } else if (error.response) {
       // Axios error format (fallback)
       const { status, data } = error.response;
-      errorMessage += data?.error || data?.message 
-        ? `: ${data.error || data.message}`
-        : `: Status ${status}`;
+      errorMessage +=
+        data?.error || data?.message ? `: ${data.error || data.message}` : `: Status ${status}`;
     } else {
       // Generic error
       errorMessage += error.message ? `: ${error.message}` : '';
@@ -263,7 +273,7 @@ class RetellAgentProvider extends IVoiceAgentProvider {
   async getAgentDetails(agentId) {
     try {
       const response = await this.client.agents.getAgent({
-        agentId
+        agentId,
       });
       this._logDebug('Agent Details', response);
       return response;

@@ -16,7 +16,7 @@ class VoiceAgentProviderFactory {
    */
   static createProvider(provider, apiKey, apiUrl) {
     const providerName = provider.toLowerCase();
-    
+
     switch (providerName) {
       case 'vapi':
         return new VapiAgentProvider(apiKey, apiUrl);

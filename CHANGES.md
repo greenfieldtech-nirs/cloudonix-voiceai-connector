@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Centralized provider registry in `src/services/providerRegistry.js` and updated `service` and `addnumber` commands to use it.
 - Renamed `11LabsAgentProvider.js` to `ElevenLabsAgentProvider.js` and updated all imports.
 - Extracted ASCII art banner into `src/utils/banner.js` and wired it via the `preAction` hook in `src/index.js`.
+- Fixed the duplicate‑branch / unreachable‐code in displayProviderConfig
+- Scoped the loading animation interval correctly
+- Eliminated unused variables & imports in commands
+- Removed a dead helper and silenced interface‐file warnings
+- Trimmed unused debug/log imports in services
 
 ## [0.2.0] - 2025-05-06
 
