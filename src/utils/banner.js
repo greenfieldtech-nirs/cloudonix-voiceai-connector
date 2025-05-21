@@ -19,9 +19,6 @@ Y88b  d88P 888 Y88..88P Y88b 888 Y88b 888 Y88..88P 888  888 888 .d8""8b.
  GitHub: https://github.com/cloudonix
 `;
 
-/**
- * Display the ASCII art banner for the CLI.
- */
 function displayBanner() {
   console.log(chalk.cyan(banner));
 }

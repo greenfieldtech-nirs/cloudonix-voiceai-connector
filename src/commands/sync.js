@@ -3,7 +3,7 @@ const ora = require('ora');
 const { getConfig, saveConfig } = require('../utils/config');
 const VapiApiService = require('../services/vapiApi');
 const RetellApiService = require('../services/retellApi');
-const ElevenLabsAgentProvider = require('../services/11LabsAgentProvider');
+const ElevenLabsAgentProvider = require('../services/ElevenLabsAgentProvider');
 
 /**
  * Sync command to synchronize local configuration with remote service providers

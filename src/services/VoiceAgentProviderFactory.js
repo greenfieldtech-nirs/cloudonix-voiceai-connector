@@ -1,6 +1,6 @@
 const VapiAgentProvider = require('./VapiAgentProvider');
 const RetellAgentProvider = require('./RetellAgentProvider');
-const ElevenLabsAgentProvider = require('./11LabsAgentProvider');
+const ElevenLabsAgentProvider = require('./ElevenLabsAgentProvider');
 
 /**
  * Factory for creating voice agent provider instances

@@ -630,7 +630,7 @@ class ElevenLabsAgentProvider extends IVoiceAgentProvider {
     }
 
     // Log error for tracking
-    logApiError(error, '11LabsAgentProvider.js', this._getLineNumber());
+    logApiError(error, 'ElevenLabsAgentProvider.js', this._getLineNumber());
 
     throw new Error(errorMessage);
   }

@@ -12,12 +12,6 @@ const aliasMap = {
   '11labs': 'elevenlabs',
 };
 
-/**
- * Retrieve provider configuration (service class and config key) by provider name.
- * @param {string} providerName - The name or alias of the provider (e.g., 'vapi', 'retell', '11labs').
- * @returns {{Service: class, configKey: string}}
- * @throws {Error} If the provider is not supported.
- */
 function getProviderConfig(providerName) {
   const key = aliasMap[providerName.toLowerCase()] || providerName.toLowerCase();
   const entry = registry[key];
@@ -27,10 +21,6 @@ function getProviderConfig(providerName) {
   return entry;
 }
 
-/**
- * Get a list of supported provider keys.
- * @returns {string[]}
- */
 function getSupportedProviders() {
   return Object.keys(registry);
 }

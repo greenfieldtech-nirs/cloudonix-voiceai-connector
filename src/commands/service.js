@@ -2,9 +2,7 @@ const chalk = require('chalk');
 const ora = require('ora');
 const inquirer = require('inquirer');
 const {getConfig, saveConfig, getAvailableDomains, getDomainConfig} = require('../utils/config');
-const VapiApiService = require('../services/vapiApi');
-const RetellApiService = require('../services/retellApi');
-const ElevenLabsAgentProvider = require('../services/11LabsAgentProvider');
+const { getProviderConfig, getSupportedProviders } = require('../services/providerRegistry');
 
 async function configureServiceProvider(options, ApiService, configKey) {
     const {provider, apikey, name, domain} = options;
@@ -154,22 +152,16 @@ async function serviceCommand(options) {
         process.exit(1);
     }
 
-    switch (provider.toLowerCase()) {
-        case 'vapi':
-            await configureServiceProvider(options, VapiApiService, 'vapi');
-            break;
-        case 'retell':
-            await configureServiceProvider(options, RetellApiService, 'retell');
-            break;
-        case '11labs':
-        case 'elevenlabs':
-            await configureServiceProvider(options, ElevenLabsAgentProvider, 'elevenlabs');
-            break;
-        default:
-            console.error(chalk.red(`Unsupported provider: ${provider}`));
-            console.log(chalk.yellow('Currently supported providers: vapi, retell, 11labs'));
-            process.exit(1);
+    let providerEntry;
+    try {
+        providerEntry = getProviderConfig(provider);
+    } catch (err) {
+        console.error(chalk.red(err.message));
+        console.log(chalk.yellow(`Currently supported providers: ${getSupportedProviders().join(', ')}`));
+        process.exit(1);
     }
+
+    await configureServiceProvider(options, providerEntry.Service, providerEntry.configKey);
 }
 
 module.exports = serviceCommand;

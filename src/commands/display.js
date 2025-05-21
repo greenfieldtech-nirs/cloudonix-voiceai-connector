@@ -2,7 +2,7 @@ const chalk = require('chalk');
 const { getConfig, getDomainConfig } = require('../utils/config');
 const VapiApiService = require('../services/vapiApi');
 const RetellApiService = require('../services/retellApi');
-const ElevenLabsAgentProvider = require('../services/11LabsAgentProvider');
+const ElevenLabsAgentProvider = require('../services/ElevenLabsAgentProvider');
 
 async function displayCommand(options) {
     const { domain, remote } = options;

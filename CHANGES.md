@@ -7,13 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Centralized provider registry in `src/services/providerRegistry.js` and updated `service` and `addnumber` commands to use it.
+- Renamed `11LabsAgentProvider.js` to `ElevenLabsAgentProvider.js` and updated all imports.
+- Extracted ASCII art banner into `src/utils/banner.js` and wired it via the `preAction` hook in `src/index.js`.
+
 ## [0.2.0] - 2025-05-06
 
 This release marks a significant milestone with the addition of full 11Labs support and the introduction of the sync command for managing phone numbers between local and remote configurations.
 
 ### Added
 - Added support for 11Labs as a new voice agent provider
-- Integrated the official elevenlabs SDK
+- Integrated the official 11Labs SDK
 - Updated service command to support 11Labs configuration
 - Added phone number management for 11Labs
 - Implemented addnumber functionality for 11Labs provider
